@@ -1,0 +1,77 @@
+article {
+    display: flex;
+    flex-direction: column;
+}
+
+section {
+    display: flex;
+    flex-direction: row;
+}
+
+.center {
+    justify-content: center;
+}
+
+.end {
+    justify-content: flex-end;
+}
+
+.around {
+    justify-content: space-around;
+}
+
+.between {
+    justify-content: space-between;
+}
+
+.even {
+    justify-content: space-evenly;
+}
+
+.selfCenter {
+    align-self: center;
+}
+
+.itemsCenter {
+    align-items: center;
+}
+
+.full,
+.fullWidth {
+    width: 100%;
+}
+
+.full,
+.fullHeight {
+    height: 100%
+}
+
+.fs {
+    font-size: small;
+}
+
+.fm {
+    font-size: medium;
+}
+
+.fl {
+    font-size: large;
+}
+
+.fxl {
+    font-size: x-large;
+}
+
+.wrap {
+    flex-wrap: wrap;
+}
+
+.nowrap {
+    flex-wrap: nowrap;
+}
+
+.screen {
+    width: 100%;
+    height: 100vh;
+    overflow: auto;
+}

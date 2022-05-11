@@ -1,0 +1,51 @@
+.bg {
+    background-color: #171820;
+    color: #77797d;
+}
+
+.fg {
+    background-color: #33343c;
+    color: #77797d;
+}
+
+
+.pc {
+    background-color: #dc5656;
+    color: #33343c;
+}
+
+.hoverable:hover {
+    color: #cccbcf;
+}
+
+.hoverable {
+    cursor: pointer;
+}
+
+.selected {
+    background-color: #dc5656;
+    color: #33343c;
+}
+
+.glow {
+    box-shadow: 0 0 10px 1px #dc5656;
+}
+
+.module {
+    border-radius: 12px;
+    margin: 0 30px 30px 0;
+}
+
+
+.sidebar {
+    background-color: rgba(35, 55, 75, 0.9);
+    color: #fff;
+    padding: 6px 12px;
+    font-family: monospace;
+    z-index: 1;
+    position: absolute;
+    top: 0;
+    left: 0;
+    margin: 12px;
+    border-radius: 4px;
+}
