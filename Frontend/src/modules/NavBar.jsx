@@ -2,13 +2,12 @@
  * PROPS
  * -----
  * selOption - the currently selected menu option
+ * options - the available menu options
  * onClick() - returns the selected menu option
  */
 
 import React, { Component } from "react"
-import { Home, Logout, Map, Settings } from '@mui/icons-material'
 import MenuOption from "../fields/MenuOption"
-import Dashboard from "./Dashboard"
 
 const styles = {
     container: {
@@ -31,28 +30,6 @@ const styles = {
     }
 }
 
-const options = [
-    {
-        name: "Dashboard",
-        icon: <Home />,
-        component: <Dashboard />
-    },
-    {
-        name: "Tracking",
-        icon: <Map />
-    }
-]
-
-const bottomOptions = [
-    {
-        name: "Settings",
-        icon: <Settings />
-    },
-    {
-        name: "Logout",
-        icon: <Logout />
-    }
-]
 
 export default class NavBar extends Component {
 
@@ -85,7 +62,7 @@ export default class NavBar extends Component {
 
                     {/*Menu Options*/}
                     <article style={styles.options}>
-                        {options.map((opt, i) => (
+                        {this.props.options[0].map((opt, i) => (
                             <MenuOption
                                 key={i}
                                 selected={isMe(opt.name)}
@@ -99,7 +76,7 @@ export default class NavBar extends Component {
 
                     {/*Settings/Logout*/}
                     <article className="end" style={styles.settings}>
-                        {bottomOptions.map((opt, i) => (
+                        {this.props.options[1].map((opt, i) => (
                             <MenuOption
                                 key={i}
                                 label={opt.name}

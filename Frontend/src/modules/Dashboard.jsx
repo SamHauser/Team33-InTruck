@@ -94,7 +94,7 @@ export default class Dashboard extends Component {
                 ))}
 
                 {lineData.map((d, i) => (
-                    <Module>
+                    <Module key={i}>
                         <InfoLine
                             key={i}
                             colour={COLOURS[i + 2]}

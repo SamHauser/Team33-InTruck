@@ -1,10 +1,10 @@
-import Home from "./Home"
+import Homepage from "./Homepage"
 
 function App() {
 
   return (
     <article className="screen bg">
-      <Home />
+      <Homepage />
     </article>
   )
 }
