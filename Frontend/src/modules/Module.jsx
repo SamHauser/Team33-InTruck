@@ -22,6 +22,7 @@ export default class Module extends Component {
             let height = ""
             let width = ""
             if (this.props.height) {
+
                 height = JSON.parse(sessionStorage.getItem("unitHeights"))[this.props.height]
             }
             if (this.props.width) {
