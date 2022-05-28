@@ -3,14 +3,17 @@ import Dashboard from "./modules/Dashboard";
 import Tracking from "./modules/Tracking";
 import NavBar from "./modules/NavBar";
 import { Home, Logout, Map, Settings } from '@mui/icons-material'
+import Alerts from "./modules/Alerts";
+import Login from "./login";
+import LogoutPage from "./logout";
 
 const styles = {
     navBar: {
-        marginRight: "15%"
+        marginRight: "max(15%,150px)",
     },
     body: {
-        padding: "5%",
-    }
+        padding: "3% 0 0 3%",
+    },
 }
 
 const options = [
@@ -35,7 +38,8 @@ const options = [
         },
         {
             name: "Logout",
-            icon: <Logout />
+            icon: <Logout />,
+            component: <LogoutPage />
         }
     ]
 ]
@@ -75,23 +79,30 @@ export default class Homepage extends Component {
     }
 
     render() {
-        return <section className="full">
+        if (!sessionStorage.getItem("logged-in")) {
+            return <Login />
 
-            {/*Navigation Bar*/}
-            <article style={styles.navBar}>
-                <NavBar
-                    selOption={this.state.selOption}
-                    options={options}
-                    onClick={this.handleOption}
-                />
-            </article>
+        } else {
+            return (
+                <section className="full">
+                    {/*Navigation Bar*/}
+                    <article style={styles.navBar}>
+                        <NavBar
+                            selOption={this.state.selOption}
+                            options={options}
+                            onClick={this.handleOption}
+                        />
+                    </article>
 
-            {/*Page */}
-            <article className="full">
-                <article style={styles.body}>
-                    {this.state.page}
-                </article>
-            </article>
-        </section>
+                    {/*Page */}
+                    <article className="full">
+                        <article style={styles.body}>
+                            {this.state.page}
+                        </article>
+                    </article>
+
+                </section>
+            )
+        }
     }
 }

@@ -75,3 +75,7 @@ section {
     height: 100vh;
     overflow: auto;
 }
+
+.pad {
+    padding: 2%;
+}
