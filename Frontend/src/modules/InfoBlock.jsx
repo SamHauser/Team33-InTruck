@@ -4,6 +4,8 @@
  * label
  * icon
  * value
+ * colour
+ * isUnit - is this module the basis for all unit calculations
  */
 import React, { Component } from "react"
 import { COLOURS } from "../config"
@@ -26,6 +28,29 @@ const styles = {
 }
 
 export default class InfoBlock extends Component {
+
+    componentDidMount() {
+        if (this.props.isUnit) {
+            var el = document.getElementById("iconBlock")
+            const margin = window.getComputedStyle(el).marginRight.substring(0, 2)
+            sessionStorage.setItem("unitMargin", margin)
+
+            let unitWidths = []
+            let unitHeights = []
+            for (let i = 0; i < 10; i++) {
+                if (i === 0) {
+                    unitWidths.push(0)
+                    unitHeights.push(0)
+                    continue
+                }
+                unitWidths.push((el.clientWidth * i) + (margin * (i - 1)))
+                unitHeights.push((el.clientHeight * i) + (margin * (i - 1)))
+            }
+            sessionStorage.setItem("unitHeights", JSON.stringify(unitHeights))
+            sessionStorage.setItem("unitWidths", JSON.stringify(unitWidths))
+            window.dispatchEvent(new Event('unit'))
+        }
+    }
 
     render() {
         return (

@@ -2,6 +2,7 @@
  * PROPS
  * -----
  * label
+ * size - in info block units
  * icon
  * data
  */
@@ -10,9 +11,6 @@ import { COLOURS } from "../config"
 import { ResponsiveContainer, YAxis, AreaChart, Area } from 'recharts'
 
 const styles = {
-    container: {
-        padding: 0
-    },
     labelContainer: {
         padding: 10,
         borderRadius: "12px 0 0 12px",
@@ -33,37 +31,14 @@ const styles = {
 }
 
 export default class InfoLine extends Component {
-    constructor(props) {
-        super(props)
-        this.state = {
-            height: 164,
-            width: 552,
-        }
-    }
-
-
-    componentDidMount() {
-        //Get average height and width of other info items
-        const iconBlock = document.getElementById("iconBlock")
-        if (iconBlock) {
-            const margin = window.getComputedStyle(iconBlock).marginRight.substring(0, 2)
-
-            this.setState({
-                height: iconBlock.clientHeight,
-                width: (iconBlock.clientWidth * 3) + (margin * 2) - 90
-            })
-        }
-    }
 
     render() {
 
         return (
             <section
+                className="full"
                 style={{
                     ...styles.container,
-                    ...{
-                        height: this.state.height
-                    }
                 }}
             >
                 <article
@@ -86,9 +61,7 @@ export default class InfoLine extends Component {
                 </article>
 
                 {/*Data*/}
-                <div className="fullHeight" style={{
-                    width: this.state.width,
-                }}>
+                <div className="full">
 
                     <ResponsiveContainer width={"100%"} height={"100%"}>
                         <AreaChart

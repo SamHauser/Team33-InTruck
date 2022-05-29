@@ -6,15 +6,11 @@ import { AttachMoney, CreditCard, LocalShipping, Sell } from "@mui/icons-materia
 import { Component } from "react"
 import { COLOURS } from "../config"
 import Title from "../fields/Title"
+import Alerts from "./Alerts"
 import InfoBlock from "./InfoBlock"
 import InfoLine from "./InfoLine"
 import Module from "./Module"
-import TestMap from "./TestMap"
-
-const styles = {
-    module: {
-    }
-}
+import Map from "./Map"
 
 const blockData = [
     {
@@ -84,31 +80,58 @@ export default class Dashboard extends Component {
     render() {
         return (<article className="full">
             <Title label="Dashboard" />
+
+            {/*Alerts*/}
+            <section className="wrap">
+                <Module width={6}>
+                    <Alerts />
+                </Module>
+            </section>
+
+            {/*Stats*/}
             <section className="wrap">
                 {blockData.map((d, i) => (
                     <InfoBlock
                         key={i}
                         colour={COLOURS[i + 2]}
+                        isUnit={i === 0}
                         {...d}
                     />
                 ))}
 
                 {lineData.map((d, i) => (
-                    <Module key={i}>
+                    <Module key={i} width={3} height={1}>
                         <InfoLine
                             key={i}
                             colour={COLOURS[i + 2]}
                             {...d}
+                            size={3}
                             data={saleData}
                         />
                     </Module>
                 ))}
-
-                <Module>
-                    <TestMap />
-                </Module>
-
             </section>
-        </article>)
+
+            {/*Map*/}
+            <section className="wrap">
+                <Module width={6} height={2}>
+                    <Map
+                        markers={[
+                            {
+                                lat: -37.8243913,
+                                long: 145.0396567
+                            },
+                            {
+                                lat: -37.823524,
+                                long: 145.043003
+                            },
+                            {
+                                lat: -37.820710,
+                                long: 145.045451
+                            }]}
+                    />
+                </Module>
+            </section>
+        </article >)
     }
 }
