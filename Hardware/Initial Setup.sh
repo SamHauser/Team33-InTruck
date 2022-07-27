@@ -17,7 +17,9 @@ python3 -m pip install msa301
 # Air quality
 sudo pip3 install bme680
 
-# Enable I2C go to 3 -> I2C and enable
+# Enable I2C
+echo "The next step is to enable I2C, go to 3 -> I2C and enable"
+read -p "Press enter to open Pi settings..."
 sudo raspi-config
 
 # More to come
