@@ -17,9 +17,15 @@ python3 -m pip install msa301
 # Air quality
 sudo pip3 install bme680
 
+# Battery
+sudo apt-get install pijuice-base -y
+
 # Enable I2C
 echo "The next step is to enable I2C, go to 3 -> I2C and enable"
 read -p "Press enter to open Pi settings..."
 sudo raspi-config
 
 # More to come
+
+
+# sudo apt install minicom -y
