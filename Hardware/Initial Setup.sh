@@ -29,3 +29,12 @@ sudo raspi-config
 
 
 # sudo apt install minicom -y
+
+# Minicom script
+# Sources:
+    # https://docs.sixfab.com/page/cellular-internet-connection-in-ecm-mode
+    # https://sixfab.com/wp-content/uploads/2022/02/Telit_LE910Cx_AT_Commands_Reference_Guide_r12.pdf
+# send AT+CGDCONT=1,"IPV4V6","super"
+# send AT#USBCFG=4
+# send AT#REBOOT
+# send AT#ECM=1,0
