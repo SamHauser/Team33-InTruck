@@ -1,0 +1,11 @@
+# Set access point name (super is for sixfab, different between sim cards)
+AT+CGDCONT=1,"IPV4V6","super"
+
+# Set USB mode (I guess for ecm mode)
+AT#USBCFG=4
+
+# Restart the module to apply the above settings
+AT#REBOOT
+
+# Start the internet session
+AT#ECM=1,0

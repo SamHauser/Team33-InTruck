@@ -18,23 +18,24 @@ python3 -m pip install msa301
 sudo pip3 install bme680
 
 # Battery
-sudo apt-get install pijuice-base -y
+sudo apt install pijuice-base -y
+
+# Install minicom, used for sending AT commands to the modem over serial
+sudo apt install minicom -y
 
 # Enable I2C
+echo
 echo "The next step is to enable I2C, go to 3 -> I2C and enable"
 read -p "Press enter to open Pi settings..."
 sudo raspi-config
 
-# More to come
-
-
-# sudo apt install minicom -y
-
-# Minicom script
+echo
+echo "Next is to open minicom and configure the modem and GPS"
+echo "See the associated files in github for instructions"
+echo "To open minicom options press ctrl+a, then z"
+echo "Recommend enabling local echo via this options menu"
+read -p "Press enter to open minicom..."
 # Sources:
     # https://docs.sixfab.com/page/cellular-internet-connection-in-ecm-mode
     # https://sixfab.com/wp-content/uploads/2022/02/Telit_LE910Cx_AT_Commands_Reference_Guide_r12.pdf
-# send AT+CGDCONT=1,"IPV4V6","super"
-# send AT#USBCFG=4
-# send AT#REBOOT
-# send AT#ECM=1,0
+sudo minicom -b 115200 -D /dev/ttyUSB2
