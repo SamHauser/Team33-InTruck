@@ -25,6 +25,9 @@ sudo apt install minicom -y
 
 # Install software to read the GPS
 sudo apt install gpsd gpsd-clients -y
+pip3 install gpsd-py3
+# Once GPSD is installed edit the /etc/default/gpsd file
+# and add /dev/ttyUSB1 (or device equivalent) into the devices
 
 # Enable I2C
 echo
