@@ -1,4 +1,5 @@
 from device import Device
+import time
 
 def main():
     device = Device()
@@ -6,6 +7,9 @@ def main():
     
     print(device.name)
     print(device.battery.status.GetChargeLevel()["data"])
+    for _ in range(5):
+        print(device.getLocation())
+        time.sleep(2)
 
 
 
