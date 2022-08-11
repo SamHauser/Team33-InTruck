@@ -10,7 +10,10 @@ AT$XTRAEN=1
 # Enables finding location via nearby wireless networks
 AT#GTPEN=1
 
-# Save GPS settings
+# Enable sending NMEA (gps data format) updates automatically
+AT$GPSNMUN=2,1,1,1,1,1,1
+
+# Save GPS settings (Not sure if it's actually needed here)
 $GPSSAV
 
 # Ensures the GPS starts faster ("Hotstart")
@@ -18,6 +21,9 @@ AT$GPSR=3
 
 # Enable GPS
 AT$GPSP=1
+
+# Save GPS settings
+$GPSSAV
 
 # Returns GPS location/speed/satellite num etc. (will return some commas and a 1 if it's searching for a lock)
 AT$GPSACP
