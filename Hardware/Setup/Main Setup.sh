@@ -23,6 +23,9 @@ sudo apt install pijuice-base -y
 # Install minicom, used for sending AT commands to the modem over serial
 sudo apt install minicom -y
 
+# Install software to read the GPS
+sudo apt install gpsd gpsd-clients -y
+
 # Enable I2C
 echo
 echo "The next step is to enable I2C, go to 3 -> I2C and enable"
