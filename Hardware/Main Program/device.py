@@ -3,9 +3,6 @@ import gpsd # Import GPS library
 
 class Device:
     def __init__(self):
-        # Example property here
-        self.name = "Example"
-        # Allows code to access the battery information
         self.battery = PiJuice(1, 0x14)
     
     # Used to warm up sensors/start gps etc
@@ -14,15 +11,18 @@ class Device:
         # Connect to a running local GPSD server
         gpsd.connect()
 
-    # Returns the provided information. Possibly could be
-    # improved to use the format as with the battery above
-    def getTemperature(self):
+    # Properties are similar to getters/setters
+    # from other languages
+    @property
+    def temperature(self):
         pass
 
-    def getHumidity(self):
+    @property
+    def humidity(self):
         pass
 
-    def getLocation(self):
+    @property
+    def location(self):
         packet = gpsd.get_current()
         return {
             "lat": packet.lat,
