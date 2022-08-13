@@ -6,6 +6,7 @@ def main():
     device.init()
     
     print(device.battery.status.GetChargeLevel()["data"])
+    print(device.networkInfo)
     for _ in range(5):
         print(device.location)
         time.sleep(2)
