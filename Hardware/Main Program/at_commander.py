@@ -12,7 +12,7 @@ class ATCommander:
         if not self._ser.is_open:
             self._ser.open()
 
-    def _runCommand(self, command: str):
+    def runCommand(self, command: str):
         # Clear any input from the connection
         if self._ser.inWaiting() > 0:
             self._ser.flushInput()
@@ -23,10 +23,6 @@ class ATCommander:
         # Return the command response (need to double check it's always the second line)
         return self._ser.readline().decode().strip()
 
-    # Example function that will enable the GPS (WIP)
-    def gpsEnable(self):
-        return(self._runCommand("AT$GPSP=1"))
-
-# Example code (WIP)
+# Example command
 atsender = ATCommander()
-print(atsender.gpsEnable())
+print(atsender.runCommand("AT$GPSP?"))
