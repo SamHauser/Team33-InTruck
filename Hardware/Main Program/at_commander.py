@@ -1,11 +1,18 @@
 import serial
 
 class ATCommander:
+    '''
+    Send AT Commands to the Telit module.
+    
+    Possible commands and their expected output can be found here:
+    https://sixfab.com/wp-content/uploads/2022/05/Telit_LE910Cx_AT_Commands_Reference_Guide_r14.pdf
+    '''
+    
     # Configure serial interface options
     _ser = serial.Serial()
     _ser.port = '/dev/ttyUSB2'
     _ser.baudrate = 115200
-    _ser.timeout = 5
+    _ser.timeout = 10
 
     def __init__(self):
         # Open the serial port
@@ -22,7 +29,3 @@ class ATCommander:
         self._ser.readline()
         # Return the command response (need to double check it's always the second line)
         return self._ser.readline().decode().strip()
-
-# Example command
-atsender = ATCommander()
-print(atsender.runCommand("AT$GPSP?"))
