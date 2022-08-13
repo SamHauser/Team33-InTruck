@@ -10,9 +10,18 @@ class Device:
     # Used to warm up sensors/start gps etc
     def init(self):
         print("Initialising hardware and sensors")
+        self._startCellular()
         self._enableGps()
         # Connect to a running local GPSD server
         gpsd.connect()
+
+    def _startCellular(self):
+        self._atsender.runCommand("AT#ECM=1,0")
+        response = self._atsender.runCommand("AT#ECM?")
+        if response == "#ECM: 0,1":
+            print("Cellular connection enabled")
+        else:
+            print("Error enabling cellular connection")
 
     def _enableGps(self):
         self._atsender.runCommand("AT$GPSP=1")
@@ -31,6 +40,11 @@ class Device:
     @property
     def humidity(self):
         pass
+
+    # @property
+    # def networkInfo(self):
+    #     info = {}
+    #     info["key"] = "value"
 
     @property
     def location(self):
