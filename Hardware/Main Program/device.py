@@ -41,10 +41,22 @@ class Device:
     def humidity(self):
         pass
 
-    # @property
-    # def networkInfo(self):
-    #     info = {}
-    #     info["key"] = "value"
+    @property
+    def networkInfo(self):
+        info = {}
+
+        response = self._atsender.runCommand("AT+COPS?").split(",")
+        info["operator"] = response[2].strip('\"')
+        if response[3] == "7":
+            info["access_tech"] = "4G"
+        elif response[3] == "2":
+            info["access_tech"] = "3G"
+        elif response[3] == "0":
+            info["access_tech"] = "2G"
+        else:
+            info["access_tech"] = "Unknown"
+        
+        return info
 
     @property
     def location(self):
