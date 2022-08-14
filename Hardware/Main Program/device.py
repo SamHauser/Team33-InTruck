@@ -1,21 +1,31 @@
 from pijuice import PiJuice # Import the battery module
+import bme680 # Air quality sensor
 import gpsd # Import GPS library
-from at_commander import ATCommander
+from at_commander import ATCommander # Send AT commands to Telit module
 
 class Device:
     def __init__(self):
         # Make the battery information directly accessible
-        self.battery = PiJuice(1, 0x14)
+        self._battery = PiJuice(1, 0x14)
         self._atsender = ATCommander()
+        # Air quality sensor
+        try:
+            self._air_sensor = bme680.BME680(bme680.I2C_ADDR_PRIMARY)
+        except (RuntimeError, IOError):
+            self._air_sensor = bme680.BME680(bme680.I2C_ADDR_SECONDARY)
     
     # Used to warm up sensors/start gps etc
     def init(self):
         print("Initialising hardware and sensors")
-        self._startCellular()
-        self._enableGps()
+        self._air_sensor.set_humidity_oversample(bme680.OS_2X)
+        self._air_sensor.set_pressure_oversample(bme680.OS_4X)
+        self._air_sensor.set_temperature_oversample(bme680.OS_8X)
+        self._air_sensor.set_filter(bme680.FILTER_SIZE_3)
+        self._start_cellular()
+        self._enable_gps()
         gpsd.connect() # Connect to a running local GPSD server
 
-    def _startCellular(self):
+    def _start_cellular(self):
         '''Starts the ECM connection. Must be done for internet after a reboot.'''
         self._atsender.runCommand("AT#ECM=1,0")
         response = self._atsender.runCommand("AT#ECM?")
@@ -24,7 +34,7 @@ class Device:
         else:
             print("Error enabling cellular connection")
 
-    def _enableGps(self):
+    def _enable_gps(self):
         '''Starts the GPS session'''
         self._atsender.runCommand("AT$GPSP=1")
         response = self._atsender.runCommand("AT$GPSP?")
@@ -37,14 +47,30 @@ class Device:
     # from other languages
     @property
     def temperature(self):
-        pass
+        if self._air_sensor.get_sensor_data():
+            # Degrees Celsius
+            return self._air_sensor.data.temperature
+        else:
+            return None
 
     @property
     def humidity(self):
-        pass
+        if self._air_sensor.get_sensor_data():
+            # Relative humidity (%)
+            return self._air_sensor.data.humidity
+        else:
+            return None
+    
+    @property
+    def air_pressure(self):
+        if self._air_sensor.get_sensor_data():
+            # hectoPascals (hPa)
+            return self._air_sensor.data.pressure
+        else:
+            return None
 
     @property
-    def networkInfo(self):
+    def network_info(self):
         info = {}
 
         # Splits the response into a list
@@ -95,3 +121,30 @@ class Device:
             return {
                 "fix": False
             }
+        
+    @property
+    def battery_info(self):
+        basic_stats = self._battery.status.GetStatus()["data"]["battery"]
+        if basic_stats in ["CHARGING_FROM_IN", "CHARGING_FROM_5V_IO"]:
+            charging = True
+            battery_present = True
+        elif basic_stats == "NORMAL":
+            charging = False
+            battery_present = True
+        elif basic_stats == "NOT_PRESENT":
+            charging = False
+            battery_present = False
+        else:
+            charging = None
+            battery_present = None
+
+
+        return {
+            "installed": battery_present,
+            "charging": charging,
+            "charge_level": self._battery.status.GetChargeLevel().get("data", 0),
+            "temp": self._battery.status.GetBatteryTemperature().get("data", 0),
+            "voltage": self._battery.status.GetBatteryVoltage().get("data", 0) / 1000,
+            "current": self._battery.status.GetBatteryCurrent().get("data", 0) / 1000,
+            "faults": self._battery.status.GetFaultStatus().get("data", {})
+        }
