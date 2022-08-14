@@ -77,14 +77,21 @@ class Device:
     @property
     def location(self):
         packet = gpsd.get_current()
-        return {
-            "lat": packet.lat,
-            "lon": packet.lon,
-            "sats": packet.sats,
-            "speed": packet.hspeed,
-            "alt": packet.alt,
-            "gps_time": packet.time,
-            "speed_err": packet.error.get("s", 0),
-            "lat_err": packet.error.get("y", 0),
-            "lon_err": packet.error.get("x", 0)
-        }
+        # Packet mode - 0 = no data, 1 = fix, 2 = 2D fix, 3 = 3D fix
+        if packet.mode > 1:
+            return {
+                "fix": True,
+                "lat": packet.lat,
+                "lon": packet.lon,
+                "sats": packet.sats,
+                "speed": packet.hspeed,
+                "alt": packet.alt,
+                "gps_time": packet.time,
+                "speed_err": packet.error.get("s", 0),
+                "lat_err": packet.error.get("y", 0),
+                "lon_err": packet.error.get("x", 0)
+            }
+        else:
+            return {
+                "fix": False
+            }
