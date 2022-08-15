@@ -103,7 +103,7 @@ class Device:
     @property
     def location(self):
         packet = gpsd.get_current()
-        # Packet mode - 0 = no data, 1 = fix, 2 = 2D fix, 3 = 3D fix
+        # Packet mode - 0 = no data, 1 = no fix, 2 = 2D fix, 3 = 3D fix
         if packet.mode > 1:
             return {
                 "fix": True,
