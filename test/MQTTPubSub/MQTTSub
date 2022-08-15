@@ -1,0 +1,16 @@
+import paho.mqtt.client as mqtt
+import random
+import time
+import settings
+
+topic = "/python/mqtt"
+
+def subscribe(client):
+    def on_message(client, userdata, msg):
+        print(f"Received `{msg.payload.decode()}` from `{msg.topic}` topic")
+    
+    client.subscribe(topic)
+    client.on_message = on_message
+
+def run():
+    
