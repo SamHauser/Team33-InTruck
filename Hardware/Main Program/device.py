@@ -1,3 +1,4 @@
+import time
 from pijuice import PiJuice # Import the battery module
 import bme680 # Air quality sensor
 import gpsd # Import GPS library
@@ -5,7 +6,6 @@ from at_commander import ATCommander # Send AT commands to Telit module
 
 class Device:
     def __init__(self):
-        # Make the battery information directly accessible
         self._battery = PiJuice(1, 0x14)
         self._atsender = ATCommander()
         # Air quality sensor
@@ -23,7 +23,8 @@ class Device:
         self._air_sensor.set_filter(bme680.FILTER_SIZE_3)
         self._start_cellular()
         self._enable_gps()
-        gpsd.connect() # Connect to a running local GPSD server
+        print("Connecting to local GPSD server")
+        gpsd.connect()
 
     def _start_cellular(self):
         '''Starts the ECM connection. Must be done for internet after a reboot.'''
@@ -102,7 +103,15 @@ class Device:
 
     @property
     def location(self):
-        packet = gpsd.get_current()
+        for _ in range(20):
+            try:
+                packet = gpsd.get_current()
+            except UserWarning:
+                print("Waiting for initial GPS data")
+                time.sleep(1)
+            else:
+                break
+
         # Packet mode - 0 = no data, 1 = no fix, 2 = 2D fix, 3 = 3D fix
         if packet.mode > 1:
             return {
