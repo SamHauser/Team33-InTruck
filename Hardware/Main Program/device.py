@@ -6,21 +6,23 @@ from at_commander import ATCommander # Send AT commands to Telit module
 
 class Device:
     def __init__(self):
-        self._battery = PiJuice(1, 0x14)
         self._atsender = ATCommander()
-        # Air quality sensor
-        try:
-            self._air_sensor = bme680.BME680(bme680.I2C_ADDR_PRIMARY)
-        except (RuntimeError, IOError):
-            self._air_sensor = bme680.BME680(bme680.I2C_ADDR_SECONDARY)
     
     # Used to warm up sensors/start gps etc
     def init(self):
         print("Initialising hardware and sensors")
-        self._air_sensor.set_humidity_oversample(bme680.OS_2X)
-        self._air_sensor.set_pressure_oversample(bme680.OS_4X)
-        self._air_sensor.set_temperature_oversample(bme680.OS_8X)
-        self._air_sensor.set_filter(bme680.FILTER_SIZE_3)
+        self._battery = PiJuice(1, 0x14)
+        # Air quality sensor
+        try:
+            print("Detecting air quality sensor")
+            self._air_sensor = bme680.BME680(bme680.I2C_ADDR_PRIMARY)
+            self._air_sensor.set_humidity_oversample(bme680.OS_2X)
+            self._air_sensor.set_pressure_oversample(bme680.OS_4X)
+            self._air_sensor.set_temperature_oversample(bme680.OS_8X)
+            self._air_sensor.set_filter(bme680.FILTER_SIZE_3)
+        except RuntimeError:
+            self._air_sensor = None
+            print("Unable to connect to air quality sensor")
         self._start_cellular()
         self._enable_gps()
         print("Connecting to local GPSD server")
@@ -48,27 +50,27 @@ class Device:
     # from other languages
     @property
     def temperature(self):
-        if self._air_sensor.get_sensor_data():
-            # Degrees Celsius
-            return self._air_sensor.data.temperature
-        else:
-            return None
+        if self._air_sensor is not None:
+            if self._air_sensor.get_sensor_data():
+                # Degrees Celsius
+                return self._air_sensor.data.temperature
+        return None
 
     @property
     def humidity(self):
-        if self._air_sensor.get_sensor_data():
-            # Relative humidity (%)
-            return self._air_sensor.data.humidity
-        else:
-            return None
+        if self._air_sensor is not None:
+            if self._air_sensor.get_sensor_data():
+                # Relative humidity (%)
+                return self._air_sensor.data.humidity
+        return None
     
     @property
     def air_pressure(self):
-        if self._air_sensor.get_sensor_data():
-            # hectoPascals (hPa)
-            return self._air_sensor.data.pressure
-        else:
-            return None
+        if self._air_sensor is not None:
+            if self._air_sensor.get_sensor_data():
+                # hectoPascals (hPa)
+                return self._air_sensor.data.pressure
+        return None
 
     @property
     def network_info(self):
@@ -121,7 +123,7 @@ class Device:
                 "sats": packet.sats,
                 "speed": packet.hspeed,
                 "alt": packet.alt,
-                "gps_time": packet.time,
+                # "gps_time": packet.time,
                 "speed_err": packet.error.get("s", 0),
                 "lat_err": packet.error.get("y", 0),
                 "lon_err": packet.error.get("x", 0)
@@ -155,5 +157,5 @@ class Device:
             "temp": self._battery.status.GetBatteryTemperature().get("data", 0),
             "voltage": self._battery.status.GetBatteryVoltage().get("data", 0) / 1000,
             "current": self._battery.status.GetBatteryCurrent().get("data", 0) / 1000,
-            "faults": self._battery.status.GetFaultStatus().get("data", {})
+            # "faults": self._battery.status.GetFaultStatus().get("data", {})
         }
