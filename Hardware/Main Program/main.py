@@ -1,5 +1,19 @@
 from device import Device
 import time
+import json
+import socket
+import paho.mqtt.client as mqtt
+
+# Could update to allow command line variables to override this default
+DEVICE_NAME = socket.gethostname()
+
+def connect_mqtt(server_address, port, client_id, username=None, password=None):
+    connection = mqtt.Client(client_id, protocol=mqtt.MQTTv5)
+    if None not in [username, password]:
+        connection.username_pw_set(username, password)
+    connection.connect(server_address, port, keepalive=60)
+    connection.loop_start()
+    return connection
 
 def main():
     device = Device()
@@ -13,6 +27,26 @@ def main():
     for _ in range(2):
         print(device.location)
         time.sleep(2)
+
+# Still work in progress
+    # mqttc = connect_mqtt("203.101.231.176", 1883, DEVICE_NAME, "", "")
+    # for i in range(20):
+    #     if i > 5:
+    #         mqttc.disconnect()
+    #     message_to_send = {
+    #         "timestamp": time.time(),
+    #         "env": {
+    #             "temp": device.temperature,
+    #             "hum": device.humidity,
+    #             "air_press": device.air_pressure
+    #         },
+    #         "batt": device.battery_info,
+    #         "network": device.network_info
+    #     }
+    #     result = mqttc.publish("python/mqtt", json.dumps(message_to_send), qos=1)
+    #     print(result.rc)
+    #     time.sleep(10)
+
 
 if __name__ == "__main__":
     main()
