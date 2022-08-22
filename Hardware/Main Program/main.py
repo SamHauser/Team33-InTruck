@@ -8,15 +8,21 @@ DEVICE_NAME = socket.gethostname()
 
 def mqtt_connect_callback(client, userdata, flags, reasonCode, properties):
     if reasonCode==0:
+        client.connected_flag = True
         print("Connected to MQTT server:",reasonCode)
     else:
         print("Unable to connect to MQTT server:",reasonCode)
+
+def mqtt_disconnect_callback(client, userdata, reasonCode, properties):
+    client.connected_flag = False
+    print("MQTT disconnected:", reasonCode)
 
 def connect_mqtt(server_address, port, client_id, username=None, password=None):
     connection = mqtt.Client(client_id, protocol=mqtt.MQTTv5)
     if None not in [username, password]:
         connection.username_pw_set(username, password)
     connection.on_connect = mqtt_connect_callback
+    connection.on_disconnect = mqtt_disconnect_callback
     print(f"Connecting to MQTT server at {server_address}:{port} with client ID {client_id}")
     connection.connect(server_address, port, keepalive=60)
     connection.loop_start()
