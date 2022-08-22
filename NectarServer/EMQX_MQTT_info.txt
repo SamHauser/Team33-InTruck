@@ -1,0 +1,38 @@
+
+************************** 	MQTT	************************** 
+Dashboard
+	203.101.231.176:18083
+MQTT address, send pubs or subs
+	203.101.231.176:1883 
+
+CMD Commands
+	emqx start
+	emqx restart
+	emqx reboot
+
+ACL list, follow https://www.emqx.io/docs/en/v4.3/advanced/acl-file.html#acl-conf-writing-rules
+	sudo nano /etc/emqx/acl.conf
+
+Master Config, used to deny anonymous and deny if no ACL is met
+	sudo nano /etc/emqx/emqx.conf
+
+ClientID or Username inbuilt plugin for authorisation
+	sudo nano /etc/emqx/plugins/emqx_auth_mnesia.conf
+
+************************** 	Node Red	************************** 
+Install
+	sudo apt-get update
+	sudo apt-get upgrade -y
+	curl -fsSL https://deb.nodesource.com/setup_14.x | sudo -E bash -
+	sudo apt-get install -y nodejs
+	sudo npm install -g --unsafe-perm node-red node-red-admin
+	node-red
+
+Settings
+	/home/ubuntu/.node-red/settings.js
+
+Flow File
+	/home/ubuntu/.node-red/flows.json
+
+Security link
+	https://nodered.org/docs/user-guide/runtime/securing-node-red
