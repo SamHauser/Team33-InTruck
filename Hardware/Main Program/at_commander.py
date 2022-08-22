@@ -17,15 +17,21 @@ class ATCommander:
     def __init__(self):
         # Open the serial port
         if not self._ser.is_open:
-            self._ser.open()
+            try:
+                self._ser.open()
+            except serial.serialutil.SerialException:
+                print("Unable to open serial interface to modem")
 
     def runCommand(self, command: str):
-        # Clear any input from the connection
-        if self._ser.inWaiting() > 0:
-            self._ser.flushInput()
-        # Send command to the module
-        self._ser.write(command.encode() + b'\r')
-        # First line sent back is newline on /dev/ttyUSB2 for some reason
-        self._ser.readline()
-        # Return the command response (need to double check it's always the second line)
-        return self._ser.readline().decode().strip()
+        if self._ser.is_open:
+            # Clear any input from the connection
+            if self._ser.inWaiting() > 0:
+                self._ser.flushInput()
+            # Send command to the module
+            self._ser.write(command.encode() + b'\r')
+            # First line sent back is newline on /dev/ttyUSB2 for some reason
+            self._ser.readline()
+            # Return the command response (need to double check it's always the second line)
+            return self._ser.readline().decode().strip()
+        else:
+            return "Error: Serial not connected"

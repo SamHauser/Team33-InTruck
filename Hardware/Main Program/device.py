@@ -22,7 +22,7 @@ class Device:
             self._air_sensor.set_filter(bme680.FILTER_SIZE_3)
         except RuntimeError:
             self._air_sensor = None
-            print("Unable to connect to air quality sensor")
+            print("Unable to detect to air quality sensor")
         self._start_cellular()
         self._enable_gps()
         print("Connecting to local GPSD server")
@@ -44,7 +44,7 @@ class Device:
         if response == "$GPSP: 1":
             print("GPS Enabled")
         else:
-            print("Error enabling GPS")
+            print("Error enabling GPS hardware")
 
     # Properties are similar to getters/setters
     # from other languages
@@ -78,44 +78,43 @@ class Device:
 
         # Splits the response into a list
         response = self._atsender.runCommand("AT+COPS?").split(",")
-        # The [2] will access the operator name from the list obtained above
-        info["operator"] = response[2].strip('\"')
-        # 7, 2 and 0 are defined in the Telit module AT commands doc (see the ATCommander class info for links)
-        if response[3] == "7":
-            info["access_tech"] = "4G"
-        elif response[3] == "2":
-            info["access_tech"] = "3G"
-        elif response[3] == "0":
-            info["access_tech"] = "2G"
-        else:
-            info["access_tech"] = "Unknown"
-        
+        if len(response) >= 4:
+            # The [2] will access the operator name from the list obtained above
+            info["operator"] = response[2].strip('\"')
+            # 7, 2 and 0 are defined in the Telit module AT commands doc (see the ATCommander class info for links)
+            if response[3] == "7":
+                info["access_tech"] = "4G"
+            elif response[3] == "2":
+                info["access_tech"] = "3G"
+            elif response[3] == "0":
+                info["access_tech"] = "2G"
+            else:
+                info["access_tech"] = "Unknown"
+
         # The [6:] part will remove the first 6 characters from the module's response
         # This allows the first value to be read after splitting
         response = self._atsender.runCommand("AT+CSQ")[6:].split(",")
-        # RSSI is "Received Signal Strength Indication"
-        # Ranges from 0 to 31 for signal level. 99 indicates not known.
-        # Higher is better
-        info["rssi"] = response[0]
-        # SQ is signal quality and ranges from 0 to 7. 99 indicates not known.
-        # Lower is better (pretty sure, need to double check to confirm)
-        info["sq"] = response[1]
+        if len(response) >= 2:
+            # RSSI is "Received Signal Strength Indication"
+            # Ranges from 0 to 31 for signal level. 99 indicates not known.
+            # Higher is better
+            info["rssi"] = response[0]
+            # SQ is signal quality and ranges from 0 to 7. 99 indicates not known.
+            # Lower is better (pretty sure, need to double check to confirm)
+            info["sq"] = response[1]
         
         return info
 
     @property
     def location(self):
-        for _ in range(20):
-            try:
-                packet = gpsd.get_current()
-            except UserWarning:
-                print("Waiting for initial GPS data")
-                time.sleep(1)
-            else:
-                break
+        try:
+            packet = gpsd.get_current()
+        except UserWarning:
+            print("Unable to connect to local GPSD server")
+            packet = None
 
         # Packet mode - 0 = no data, 1 = no fix, 2 = 2D fix, 3 = 3D fix
-        if packet.mode > 1:
+        if packet is not None and packet.mode > 1:
             return {
                 "fix": True,
                 "lat": packet.lat,
