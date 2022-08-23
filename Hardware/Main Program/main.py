@@ -6,6 +6,13 @@ import paho.mqtt.client as mqtt
 
 DEVICE_NAME = socket.gethostname()
 
+class MessageElement:
+    def __init__(self, name: str, send_freq: float, data):
+        self.name = name
+        self.send_freq = send_freq
+        self.data = data
+        self.last_sent = 0
+
 # Runs when the MQTT loop thread connects
 def mqtt_connect_callback(client, userdata, flags, reasonCode, properties):
     # Reason code 0 is successful connection
@@ -49,19 +56,27 @@ def main():
         if mqttc.connected_flag:
             break
         time.sleep(0.1)
-    # Example loop for now
-    for i in range(1000):
-        # Prepare as dictionary for future conversion to JSON
+
+    message_elements = [
+        MessageElement("network", 2, device.network_info),
+        MessageElement("environment", 5, {
+            "temperature": device.temperature,
+            "humidity": device.humidity,
+            "air_pressure": device.air_pressure
+        }),
+        MessageElement("battery", 10, device.battery_info)
+    ]
+
+    while True:
         message_to_send = {
-            "timestamp": time.time(),
-            "environment": {
-                "temperature": device.temperature,
-                "humidity": device.humidity,
-                "air_pressure": device.air_pressure
-            },
-            "battery": device.battery_info,
-            "network": device.network_info
+            "timestamp": time.time()
         }
+        ref_time = time.monotonic()
+        for element in message_elements:
+            if ref_time - element.last_sent > element.send_freq:
+                message_to_send[element.name] = element.data
+                element.last_sent = ref_time
+
         # Set publish success for each message
         publish_success = False
         # connected_flag should be true if connected. When disconnected will take ~1 min to change to false.
@@ -80,7 +95,8 @@ def main():
             print("In the future will save to local storage here")
         else:
             print("Published message")
-        # For the example loop
+
+        # Will change in future
         time.sleep(2)
 
 
