@@ -134,7 +134,10 @@ class Device:
         
     @property
     def battery_info(self):
-        basic_stats = self._battery.status.GetStatus()["data"]["battery"]
+        try:
+            basic_stats = self._battery.status.GetStatus()["data"]["battery"]
+        except KeyError:
+            return {"installed": False}
         if basic_stats in ["CHARGING_FROM_IN", "CHARGING_FROM_5V_IO"]:
             charging = True
             battery_present = True
@@ -147,7 +150,6 @@ class Device:
         else:
             charging = None
             battery_present = None
-
 
         return {
             "installed": battery_present,
