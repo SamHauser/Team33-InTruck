@@ -6,48 +6,52 @@ import paho.mqtt.client as mqtt
 
 DEVICE_NAME = socket.gethostname()
 
+# Runs when the MQTT loop thread connects
 def mqtt_connect_callback(client, userdata, flags, reasonCode, properties):
-    if reasonCode==0:
+    # Reason code 0 is successful connection
+    if reasonCode == 0:
         client.connected_flag = True
-        print("Connected to MQTT server:",reasonCode)
+        print("Connected to MQTT broker:", reasonCode)
     else:
-        print("Unable to connect to MQTT server:",reasonCode)
+        print("Unable to connect to MQTT broker:", reasonCode)
 
+# Runs when the MQTT loop thread disconnects (can take ~1 min after connection drops to trigger)
 def mqtt_disconnect_callback(client, userdata, reasonCode, properties):
     client.connected_flag = False
     print("MQTT disconnected:", reasonCode)
 
 def connect_mqtt(server_address, port, client_id, username=None, password=None):
+    # Sets connected flag in class
+    mqtt.Client.connected_flag = False
     connection = mqtt.Client(client_id, protocol=mqtt.MQTTv5)
+    # Set username and password, if provided
     if None not in [username, password]:
         connection.username_pw_set(username, password)
+    # Bind callback functions
     connection.on_connect = mqtt_connect_callback
     connection.on_disconnect = mqtt_disconnect_callback
-    print(f"Connecting to MQTT server at {server_address}:{port} with client ID {client_id}")
-    connection.connect(server_address, port, keepalive=60)
+    print(f"Connecting to MQTT broker at {server_address}:{port} with client ID {client_id}")
+    try:
+        connection.connect(server_address, port, keepalive=60)
+    except OSError as err_msg:
+        print("Unable to connect to MQTT broker:", err_msg)
+    # Opens loop in another thread. Will automatically attempt reconnection
     connection.loop_start()
     return connection
 
 def main():
     device = Device()
     device.init()
-    
-    # print(device.battery_info)
-    # print(device.network_info)
-    # print(device.temperature)
-    # print(device.humidity)
-    # print(device.air_pressure)
-    # for _ in range(2):
-    #     print(device.location)
-    #     time.sleep(2)
 
-# Still work in progress
     mqttc = connect_mqtt("203.101.231.176", 1883, DEVICE_NAME, "admin", "rogerthat")
+    # Give time for it to connect
+    for _ in range(10):
+        if mqttc.connected_flag:
+            break
+        time.sleep(0.1)
+    # Example loop for now
     for i in range(1000):
-        # if i == 2:
-        #     mqttc.disconnect()
-        # elif i == 5:
-        #     mqttc.reconnect()
+        # Prepare as dictionary for future conversion to JSON
         message_to_send = {
             "timestamp": time.time(),
             "environment": {
@@ -58,15 +62,25 @@ def main():
             "battery": device.battery_info,
             "network": device.network_info
         }
-        result = mqttc.publish("python/mqtt", json.dumps(message_to_send), qos=1)
-        result.wait_for_publish(timeout=1)
-        # while not result.is_published():
-        #     print("publishing")
-        # print(result)
-        try:
-            print(result.is_published())
-        except RuntimeError:
-            print("disconnected")
+        # Set publish success for each message
+        publish_success = False
+        # connected_flag should be true if connected. When disconnected will take ~1 min to change to false.
+        # Changes back to true pretty quick on reconnect. This is done with the callback functions.
+        if mqttc.connected_flag:
+            # Attempt to publish message above as JSON
+            result = mqttc.publish("python/mqtt", json.dumps(message_to_send), qos=1)
+            try:
+                # Give it a sec for the server to confirm it is published (for qos 1 and I think also 2)
+                result.wait_for_publish(timeout=1)
+                publish_success = result.is_published()
+            except RuntimeError as err_msg:
+                print("Unable to publish:", err_msg)
+        # If it was unable to publish the message, save it locally for sending later (messages will include the original timestamp)
+        if not publish_success:
+            print("In the future will save to local storage here")
+        else:
+            print("Published message")
+        # For the example loop
         time.sleep(2)
 
 
