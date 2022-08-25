@@ -3,8 +3,17 @@ import time
 import json
 import socket
 import paho.mqtt.client as mqtt
+from decouple import config
 
 DEVICE_NAME = socket.gethostname()
+# To use the config() functions below, create a file called .env in the main program folder.
+# Add the info like this, line by line:
+    # MQTT_BROKER_PORT=1883
+# etc. This means configuration is not hard coded.
+MQTT_ADDRESS = config('MQTT_BROKER_ADDRESS')
+MQTT_PORT = config('MQTT_BROKER_PORT', default=1883, cast=int)
+MQTT_USERNAME = config('MQTT_USERNAME')
+MQTT_PASS = config('MQTT_PASSWORD')
 
 class MessageElement:
     def __init__(self, name: str, send_freq: float, data):
@@ -50,13 +59,14 @@ def main():
     device = Device()
     device.init()
 
-    mqttc = connect_mqtt("203.101.231.176", 1883, DEVICE_NAME, "admin", "rogerthat")
+    mqttc = connect_mqtt(MQTT_ADDRESS, MQTT_PORT, DEVICE_NAME, MQTT_USERNAME, MQTT_PASS)
     # Give time for it to connect
     for _ in range(10):
         if mqttc.connected_flag:
             break
         time.sleep(0.1)
 
+    # Create list of what to include in the json payload
     message_elements = [
         MessageElement("network", 2, device.network_info),
         MessageElement("environment", 5, {
@@ -67,37 +77,40 @@ def main():
         MessageElement("battery", 10, device.battery_info)
     ]
 
+    # Main loop for device
     while True:
-        message_to_send = {
-            "timestamp": time.time()
-        }
+        message_payload = {}
         ref_time = time.monotonic()
         for element in message_elements:
             if ref_time - element.last_sent > element.send_freq:
-                message_to_send[element.name] = element.data
+                message_payload[element.name] = element.data
                 element.last_sent = ref_time
-
-        # Set publish success for each message
-        publish_success = False
-        # connected_flag should be true if connected. When disconnected will take ~1 min to change to false.
-        # Changes back to true pretty quick on reconnect. This is done with the callback functions.
-        if mqttc.connected_flag:
-            # Attempt to publish message above as JSON
-            result = mqttc.publish("python/mqtt", json.dumps(message_to_send), qos=1)
-            try:
-                # Give it a sec for the server to confirm it is published (for qos 1 and I think also 2)
-                result.wait_for_publish(timeout=1)
-                publish_success = result.is_published()
-            except RuntimeError as err_msg:
-                print("Unable to publish:", err_msg)
-        # If it was unable to publish the message, save it locally for sending later (messages will include the original timestamp)
-        if not publish_success:
-            print("In the future will save to local storage here")
-        else:
-            print("Published message")
+        
+        if len(message_payload) != 0:
+            # Add device name and timestamp
+            message_payload["device_name"] = DEVICE_NAME
+            message_payload["timestamp"] = time.time()
+            # Set publish success for each message
+            publish_success = False
+            # connected_flag should be true if connected. When disconnected will take ~1 min to change to false.
+            # Changes back to true pretty quick on reconnect. This is done with the callback functions.
+            if mqttc.connected_flag:
+                # Attempt to publish message above as JSON
+                result = mqttc.publish("python/mqtt", json.dumps(message_payload), qos=1)
+                try:
+                    # Give it a sec for the server to confirm it is published (for qos 1 and I think also 2)
+                    result.wait_for_publish(timeout=1)
+                    publish_success = result.is_published()
+                except RuntimeError as err_msg:
+                    print("Unable to publish:", err_msg)
+            # If it was unable to publish the message, save it locally for sending later (messages will include the original timestamp)
+            if not publish_success:
+                print("In the future will save to local storage here")
+            else:
+                print("Published message", message_payload)
 
         # Will change in future
-        time.sleep(2)
+        time.sleep(1)
 
 
 if __name__ == "__main__":
