@@ -36,3 +36,23 @@ Flow File
 
 Security link
 	https://nodered.org/docs/user-guide/runtime/securing-node-red
+
+Using SSH tunnel
+	ssh -i 'your Key path' -L 80:localhost:1880 ubuntu@203.101.231.176
+
+************************** 	MongoDB	**************************
+Install instructions	
+	https://www.mongodb.com/docs/manual/tutorial/install-mongodb-on-ubuntu/
+
+Config File	
+	/etc/mongod.conf
+
+Run MongoDB, this should start on boot
+	sudo systemctl start mongod
+
+Check Status
+	sudo systemctl status mongod
+
+Connect from command line on port 27017
+	mongosh
+	more info found here: https://www.mongodb.com/docs/mongodb-shell/
