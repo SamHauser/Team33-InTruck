@@ -23,6 +23,9 @@ sudo apt install pijuice-base -y
 # MQTT client
 sudo pip3 install paho-mqtt
 
+# Storing parameters
+pip install python-decouple
+
 # Install minicom, used for sending AT commands to the modem over serial
 sudo apt install minicom -y
 
