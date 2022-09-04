@@ -4,6 +4,7 @@
 #   pip install uvicorn
 #   pip install pymongo
 #   pip install motor
+# Install via "pip install -r requirements.txt"
 #
 
 

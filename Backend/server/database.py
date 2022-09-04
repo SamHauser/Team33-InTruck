@@ -1,6 +1,7 @@
 import motor.motor_asyncio
 from bson.objectid import ObjectId
 from bson import SON, json_util
+import datetime, time
 import json
 import pprint
 
@@ -61,12 +62,24 @@ DeviceCollection = database.get_collection("DeviceData")
 
 async def retrieveDevicesNames():
     response = await database.command(SON([('distinct', 'DeviceData'), ('key', "device_name")]))
-    return response
+    doc = json.dumps(response, default=json_util.default)
+    return doc
 
 async def retrieveDeviceData(device_name: str):
     #device = DeviceCollection.find({'device_name': device_name}).sort("timestamp")
     deviceData = []
     async for deviceDoc in DeviceCollection.find({'device_name': device_name}).sort("timestamp"):
+        doc = json.dumps(deviceDoc, default=json_util.default)
+        deviceData.append(doc)
+    return deviceData
+
+async def retrieveDeviceDataLast24(device_name: str):
+    #device = DeviceCollection.find({'device_name': device_name}).sort("timestamp")
+    #my_time = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(1347517370))
+    now = datetime.datetime.now()
+    minus24 = now - datetime.timedelta(days=10)
+    deviceData = []
+    async for deviceDoc in DeviceCollection.find({'device_name': {'$eq' : device_name}, 'timestamp': {'$gt' : minus24.timestamp()}}):
         doc = json.dumps(deviceDoc, default=json_util.default)
         deviceData.append(doc)
     return deviceData
