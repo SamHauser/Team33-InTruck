@@ -103,7 +103,10 @@ class Device:
             # Lower is better (pretty sure, need to double check to confirm)
             info["sq"] = response[1]
         
-        return info
+        if info:
+            return info
+        else:
+            return None
 
     @property
     def location(self):
@@ -137,7 +140,7 @@ class Device:
         try:
             basic_stats = self._battery.status.GetStatus()["data"]["battery"]
         except KeyError:
-            return {"installed": False}
+            battery_present = False
         if basic_stats in ["CHARGING_FROM_IN", "CHARGING_FROM_5V_IO"]:
             charging = True
             battery_present = True
@@ -150,13 +153,18 @@ class Device:
         else:
             charging = None
             battery_present = None
-
-        return {
-            "installed": battery_present,
-            "charging": charging,
-            "charge_level": self._battery.status.GetChargeLevel().get("data", 0),
-            "temp": self._battery.status.GetBatteryTemperature().get("data", 0),
-            "voltage": self._battery.status.GetBatteryVoltage().get("data", 0) / 1000,
-            "current": self._battery.status.GetBatteryCurrent().get("data", 0) / 1000,
-            # "faults": self._battery.status.GetFaultStatus().get("data", {})
-        }
+        
+        if battery_present:
+            return {
+                "installed": battery_present,
+                "charging": charging,
+                "charge_level": self._battery.status.GetChargeLevel().get("data", 0),
+                "temp": self._battery.status.GetBatteryTemperature().get("data", 0),
+                "voltage": self._battery.status.GetBatteryVoltage().get("data", 0) / 1000,
+                "current": self._battery.status.GetBatteryCurrent().get("data", 0) / 1000,
+                # "faults": self._battery.status.GetFaultStatus().get("data", {})
+            }
+        else:
+            return {
+                "installed": battery_present,
+            }
