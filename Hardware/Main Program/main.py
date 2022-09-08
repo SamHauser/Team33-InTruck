@@ -1,6 +1,7 @@
 from device import Device
 from mqtt_connector import MqttConnector
 import time
+from math import gcd
 import json
 import socket
 import sqlite3
@@ -47,6 +48,9 @@ def main():
         MessageElement("battery", 10, device.battery_info)
     ]
 
+    # loop_rest = gcd([element.send_freq for element in message_elements])
+    loop_rest = 1
+
     with closing(sqlite3.connect("local_cache.db")) as connection:
         with closing(connection.cursor()) as db_cursor:
             # Configure local storage
@@ -67,13 +71,25 @@ def main():
                     message_payload["timestamp"] = time.time()
                     if mqttc.publish("python/mqtt", json.dumps(message_payload)):
                         print("Publish success")
+                        while ref_time > time.monotonic() - loop_rest:
+                            row = db_cursor.execute("SELECT rowid, * FROM stored_messages").fetchone()
+                            if row is None:
+                                print("No cache to send")
+                                time.sleep(loop_rest)
+                                break
+                            else:
+                                print("Sending cache entry", row[0])
+                                if mqttc.publish("python/mqtt", row[1]):
+                                    db_cursor.execute("DELETE FROM stored_messages WHERE rowid = ?", (row[0],))
+                                    connection.commit()
                     else:
-                        print("Couldn't publish")
+                        print("Couldn't publish, saving locally")
                         db_cursor.execute("INSERT INTO stored_messages VALUES (?)", (json.dumps(message_payload),))
                         connection.commit()
+                        time.sleep(loop_rest)
 
                 # Will change in future
-                time.sleep(1)
+                time.sleep(loop_rest)
 
 
 if __name__ == "__main__":
