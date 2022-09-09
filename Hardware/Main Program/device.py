@@ -45,6 +45,13 @@ class Device:
             print("GPS Enabled")
         else:
             print("Error enabling GPS hardware")
+    
+    def set_led(self, r: int, g: int, b: int):
+        '''Set the PiJuice LED colour via RGB (0-255)'''
+        try:
+            self._battery.status.SetLedState("D2", [r, g, b])
+        except:
+            pass
 
     # Properties are similar to getters/setters
     # from other languages
