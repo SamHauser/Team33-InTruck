@@ -4,6 +4,7 @@ import time
 # from math import gcd
 import json
 import socket
+import atexit
 import sqlite3
 from contextlib import closing
 from decouple import config
@@ -25,9 +26,18 @@ class MessageElement:
         self.data = data
         self.last_sent = 0
 
+def exit_handler(device):
+    print("Exiting Application")
+    # Turn off led when program is quit
+    device.set_led(0, 0, 0)
+
+
 def main():
     device = Device()
     device.init()
+    atexit.register(exit_handler, device)
+    # Set LED to blue to indicate initial connection
+    device.set_led(0, 0, 100)
 
     mqttc = MqttConnector()
     mqttc.connect(MQTT_ADDRESS, MQTT_PORT, DEVICE_NAME, MQTT_USERNAME, MQTT_PASS)
@@ -74,6 +84,7 @@ def main():
                     # Publish function returns true or false for success
                     if mqttc.publish("python/mqtt", json.dumps(message_payload)):
                         print("Published message")
+                        device.set_led(0, 60, 0)
                         # If there's any cached data, use the waiting time here to send it
                         while ref_time > time.monotonic() - loop_rest:
                             # Take the oldest entry
@@ -91,6 +102,7 @@ def main():
                     else:
                         # Save data locally if it can't connect
                         print("Couldn't publish, saving locally")
+                        device.set_led(60, 0, 0)
                         db_cursor.execute("INSERT INTO stored_messages VALUES (?)", (json.dumps(message_payload),))
                         connection.commit()
 
