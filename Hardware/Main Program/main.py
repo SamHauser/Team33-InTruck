@@ -1,7 +1,7 @@
 from device import Device
 from mqtt_connector import MqttConnector
 import time
-from math import gcd
+# from math import gcd
 import json
 import socket
 import sqlite3
@@ -59,8 +59,10 @@ def main():
             # Main loop for device
             while True:
                 message_payload = {}
+                # Monotonic time always counts up and is unrelated to device time/timezone changes
                 ref_time = time.monotonic()
                 for element in message_elements:
+                    # Only collect data if it's been enough time since it was last sent
                     if ref_time - element.last_sent > element.send_freq:
                         message_payload[element.name] = element.data
                         element.last_sent = ref_time
@@ -69,27 +71,33 @@ def main():
                     # Add device name and timestamp
                     message_payload["device_name"] = DEVICE_NAME
                     message_payload["timestamp"] = time.time()
+                    # Publish function returns true or false for success
                     if mqttc.publish("python/mqtt", json.dumps(message_payload)):
-                        print("Publish success")
+                        print("Published message")
+                        # If there's any cached data, use the waiting time here to send it
                         while ref_time > time.monotonic() - loop_rest:
+                            # Take the oldest entry
                             row = db_cursor.execute("SELECT rowid, * FROM stored_messages").fetchone()
+                            # Don't send if there is no data
                             if row is None:
-                                print("No cache to send")
-                                time.sleep(loop_rest)
                                 break
                             else:
                                 print("Sending cache entry", row[0])
+                                # Publish cached data
                                 if mqttc.publish("python/mqtt", row[1]):
+                                    # If the message was successfully sent, remove it from local storage
                                     db_cursor.execute("DELETE FROM stored_messages WHERE rowid = ?", (row[0],))
                                     connection.commit()
                     else:
+                        # Save data locally if it can't connect
                         print("Couldn't publish, saving locally")
                         db_cursor.execute("INSERT INTO stored_messages VALUES (?)", (json.dumps(message_payload),))
                         connection.commit()
-                        time.sleep(loop_rest)
 
-                # Will change in future
-                time.sleep(loop_rest)
+                # Sleep for the remaining time, accounting for the time needed for the sending code above
+                sleep_time = ref_time - time.monotonic() + loop_rest
+                if sleep_time > 0:
+                    time.sleep(sleep_time)
 
 
 if __name__ == "__main__":
