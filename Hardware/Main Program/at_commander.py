@@ -1,4 +1,6 @@
 import serial
+import logging
+log = logging.getLogger(__name__)
 
 class ATCommander:
     '''
@@ -20,7 +22,7 @@ class ATCommander:
             try:
                 self._ser.open()
             except serial.serialutil.SerialException:
-                print("Unable to open serial interface to modem")
+                log.info(f"Unable to open serial interface to modem on port {self._ser.port}")
 
     def runCommand(self, command: str):
         if self._ser.is_open:

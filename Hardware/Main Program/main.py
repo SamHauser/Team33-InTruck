@@ -1,6 +1,7 @@
 from device import Device
 from mqtt_connector import MqttConnector
 import time
+import logging
 # from math import gcd
 import json
 import socket
@@ -27,12 +28,13 @@ class MessageElement:
         self.last_sent = 0
 
 def exit_handler(device):
-    print("Exiting Application")
+    logging.info("Exiting")
     # Turn off led when program is quit
     device.set_led(0, 0, 0)
 
 
 def main():
+    logging.info("Starting application")
     device = Device()
     device.init()
     atexit.register(exit_handler, device)
@@ -73,7 +75,7 @@ def main():
                 ref_time = time.monotonic()
                 for element in message_elements:
                     # Only collect data if it's been enough time since it was last sent
-                    if ref_time - element.last_sent > element.send_freq:
+                    if ref_time - element.last_sent > element.send_freq and element.data:
                         message_payload[element.name] = element.data
                         element.last_sent = ref_time
                 
@@ -83,7 +85,7 @@ def main():
                     message_payload["timestamp"] = time.time()
                     # Publish function returns true or false for success
                     if mqttc.publish("python/mqtt", json.dumps(message_payload)):
-                        print("Published message")
+                        logging.info(f"Published message with {list(message_payload.keys())}")
                         device.set_led(0, 60, 0)
                         # If there's any cached data, use the waiting time here to send it
                         while ref_time > time.monotonic() - loop_rest:
@@ -93,7 +95,7 @@ def main():
                             if row is None:
                                 break
                             else:
-                                print("Sending cache entry", row[0])
+                                logging.info(f"Publishing cache entry {row[0]}")
                                 # Publish cached data
                                 if mqttc.publish("python/mqtt", row[1]):
                                     # If the message was successfully sent, remove it from local storage
@@ -101,7 +103,7 @@ def main():
                                     connection.commit()
                     else:
                         # Save data locally if it can't connect
-                        print("Couldn't publish, saving locally")
+                        logging.info("Unable to publish, saving locally")
                         device.set_led(60, 0, 0)
                         db_cursor.execute("INSERT INTO stored_messages VALUES (?)", (json.dumps(message_payload),))
                         connection.commit()
@@ -113,4 +115,5 @@ def main():
 
 
 if __name__ == "__main__":
+    logging.basicConfig(filename='intruck.log', format='%(asctime)s - %(message)s', level=logging.INFO)
     main()

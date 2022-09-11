@@ -1,8 +1,9 @@
-import time
 from pijuice import PiJuice # Import the battery module
 import bme680 # Air quality sensor
 import gpsd # Import GPS library
 from at_commander import ATCommander # Send AT commands to Telit module
+import logging
+log = logging.getLogger(__name__)
 
 class Device:
     def __init__(self):
@@ -10,11 +11,11 @@ class Device:
     
     # Used to warm up sensors/start gps etc
     def init(self):
-        print("Initialising hardware and sensors")
+        log.info("Initialising hardware and sensors")
         self._battery = PiJuice(1, 0x14)
         # Air quality sensor
         try:
-            print("Detecting air quality sensor")
+            log.info("Detecting air quality sensor")
             self._air_sensor = bme680.BME680(bme680.I2C_ADDR_PRIMARY)
             self._air_sensor.set_humidity_oversample(bme680.OS_2X)
             self._air_sensor.set_pressure_oversample(bme680.OS_4X)
@@ -22,10 +23,9 @@ class Device:
             self._air_sensor.set_filter(bme680.FILTER_SIZE_3)
         except RuntimeError:
             self._air_sensor = None
-            print("Unable to detect to air quality sensor")
+            log.warning("Unable to detect to air quality sensor")
         self._start_cellular()
         self._enable_gps()
-        print("Connecting to local GPSD server")
         gpsd.connect()
 
     def _start_cellular(self):
@@ -33,18 +33,18 @@ class Device:
         self._atsender.runCommand("AT#ECM=1,0")
         response = self._atsender.runCommand("AT#ECM?")
         if response == "#ECM: 0,1":
-            print("Cellular connection enabled")
+            log.info("Cellular connection enabled")
         else:
-            print("Error enabling cellular connection")
+            log.warning(f"Error enabling cellular connection: {response}")
 
     def _enable_gps(self):
         '''Starts the GPS session'''
         self._atsender.runCommand("AT$GPSP=1")
         response = self._atsender.runCommand("AT$GPSP?")
         if response == "$GPSP: 1":
-            print("GPS Enabled")
+            log.info("GPS Enabled")
         else:
-            print("Error enabling GPS hardware")
+            log.warning(f"Error enabling GPS hardware: {response}")
     
     def set_led(self, r: int, g: int, b: int):
         '''Set the PiJuice LED colour via RGB (0-255)'''
@@ -120,7 +120,7 @@ class Device:
         try:
             packet = gpsd.get_current()
         except UserWarning:
-            print("Unable to connect to local GPSD server")
+            log.warning("Unable to connect to local GPSD server")
             packet = None
 
         # Packet mode - 0 = no data, 1 = no fix, 2 = 2D fix, 3 = 3D fix
