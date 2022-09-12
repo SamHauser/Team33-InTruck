@@ -58,7 +58,8 @@ def main():
 
     # Create list of what to include in the json payload
     message_elements = [
-        MessageElement("network", 2, device.network_info),
+        # MessageElement("location", 1, device.location),
+        MessageElement("network", 5, device.network_info),
         MessageElement("environment", 5, {
             "temperature": device.temperature,
             "humidity": device.humidity,
@@ -82,7 +83,7 @@ def main():
                 ref_time = time.monotonic()
                 for element in message_elements:
                     # Only collect data if it's been enough time since it was last sent
-                    if ref_time - element.last_sent > element.send_freq and element.data:
+                    if ref_time - element.last_sent > element.send_freq and element.data is not None:
                         message_payload[element.name] = element.data
                         element.last_sent = ref_time
                 
