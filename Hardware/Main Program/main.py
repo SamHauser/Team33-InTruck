@@ -1,9 +1,21 @@
+import logging
+from logging.handlers import RotatingFileHandler
 from device import Device
+from mqtt_connector import MqttConnector
 import time
 import json
 import socket
-import paho.mqtt.client as mqtt
+import atexit
+import sqlite3
+from contextlib import closing
 from decouple import config
+
+logging.basicConfig(
+    handlers=[RotatingFileHandler("intruck.log", maxBytes=10000000, backupCount=5), logging.StreamHandler()],
+    level=logging.INFO,
+    format='%(asctime)s - %(message)s'
+)
+log = logging.getLogger("InTruck")
 
 DEVICE_NAME = socket.gethostname()
 # To use the config() functions below, create a file called .env in the main program folder.
@@ -22,44 +34,22 @@ class MessageElement:
         self.data = data
         self.last_sent = 0
 
-# Runs when the MQTT loop thread connects
-def mqtt_connect_callback(client, userdata, flags, reasonCode, properties):
-    # Reason code 0 is successful connection
-    if reasonCode == 0:
-        client.connected_flag = True
-        print("Connected to MQTT broker:", reasonCode)
-    else:
-        print("Unable to connect to MQTT broker:", reasonCode)
+def exit_handler(device):
+    log.info("-----Exiting-----")
+    # Turn off led when program is quit
+    device.set_led(0, 0, 0)
 
-# Runs when the MQTT loop thread disconnects (can take ~1 min after connection drops to trigger)
-def mqtt_disconnect_callback(client, userdata, reasonCode, properties):
-    client.connected_flag = False
-    print("MQTT disconnected:", reasonCode)
-
-def connect_mqtt(server_address, port, client_id, username=None, password=None):
-    # Sets connected flag in class
-    mqtt.Client.connected_flag = False
-    connection = mqtt.Client(client_id, protocol=mqtt.MQTTv5)
-    # Set username and password, if provided
-    if None not in [username, password]:
-        connection.username_pw_set(username, password)
-    # Bind callback functions
-    connection.on_connect = mqtt_connect_callback
-    connection.on_disconnect = mqtt_disconnect_callback
-    print(f"Connecting to MQTT broker at {server_address}:{port} with client ID {client_id}")
-    try:
-        connection.connect(server_address, port, keepalive=60)
-    except OSError as err_msg:
-        print("Unable to connect to MQTT broker:", err_msg)
-    # Opens loop in another thread. Will automatically attempt reconnection
-    connection.loop_start()
-    return connection
 
 def main():
+    log.info("-----Starting application-----")
     device = Device()
     device.init()
+    atexit.register(exit_handler, device)
+    # Set LED to blue to indicate initial connection
+    device.set_led(0, 0, 100)
 
-    mqttc = connect_mqtt(MQTT_ADDRESS, MQTT_PORT, DEVICE_NAME, MQTT_USERNAME, MQTT_PASS)
+    mqttc = MqttConnector()
+    mqttc.connect(MQTT_ADDRESS, MQTT_PORT, DEVICE_NAME, MQTT_USERNAME, MQTT_PASS)
     # Give time for it to connect
     for _ in range(10):
         if mqttc.connected_flag:
@@ -68,7 +58,8 @@ def main():
 
     # Create list of what to include in the json payload
     message_elements = [
-        MessageElement("network", 2, device.network_info),
+        # MessageElement("location", 1, device.location),
+        MessageElement("network", 5, device.network_info),
         MessageElement("environment", 5, {
             "temperature": device.temperature,
             "humidity": device.humidity,
@@ -77,40 +68,58 @@ def main():
         MessageElement("battery", 10, device.battery_info)
     ]
 
-    # Main loop for device
-    while True:
-        message_payload = {}
-        ref_time = time.monotonic()
-        for element in message_elements:
-            if ref_time - element.last_sent > element.send_freq:
-                message_payload[element.name] = element.data
-                element.last_sent = ref_time
-        
-        if len(message_payload) != 0:
-            # Add device name and timestamp
-            message_payload["device_name"] = DEVICE_NAME
-            message_payload["timestamp"] = time.time()
-            # Set publish success for each message
-            publish_success = False
-            # connected_flag should be true if connected. When disconnected will take ~1 min to change to false.
-            # Changes back to true pretty quick on reconnect. This is done with the callback functions.
-            if mqttc.connected_flag:
-                # Attempt to publish message above as JSON
-                result = mqttc.publish("python/mqtt", json.dumps(message_payload), qos=1)
-                try:
-                    # Give it a sec for the server to confirm it is published (for qos 1 and I think also 2)
-                    result.wait_for_publish(timeout=1)
-                    publish_success = result.is_published()
-                except RuntimeError as err_msg:
-                    print("Unable to publish:", err_msg)
-            # If it was unable to publish the message, save it locally for sending later (messages will include the original timestamp)
-            if not publish_success:
-                print("In the future will save to local storage here")
-            else:
-                print("Published message", message_payload)
+    # loop_rest = gcd([element.send_freq for element in message_elements])
+    loop_rest = 1
 
-        # Will change in future
-        time.sleep(1)
+    with closing(sqlite3.connect("local_cache.db")) as connection:
+        with closing(connection.cursor()) as db_cursor:
+            # Configure local storage
+            db_cursor.execute("CREATE TABLE IF NOT EXISTS stored_messages (json_payload TEXT)")
+            connection.commit()
+            # Main loop for device
+            while True:
+                message_payload = {}
+                # Monotonic time always counts up and is unrelated to device time/timezone changes
+                ref_time = time.monotonic()
+                for element in message_elements:
+                    # Only collect data if it's been enough time since it was last sent
+                    if ref_time - element.last_sent > element.send_freq and element.data is not None:
+                        message_payload[element.name] = element.data
+                        element.last_sent = ref_time
+                
+                if len(message_payload) != 0:
+                    # Add device name and timestamp
+                    message_payload["device_name"] = DEVICE_NAME
+                    message_payload["timestamp"] = time.time()
+                    # Publish function returns true or false for success
+                    if mqttc.publish("python/mqtt", json.dumps(message_payload)):
+                        log.info(f"Published message with {list(message_payload.keys())}")
+                        device.set_led(0, 60, 0)
+                        # If there's any cached data, use the waiting time here to send it
+                        while ref_time > time.monotonic() - loop_rest:
+                            # Take the oldest entry
+                            row = db_cursor.execute("SELECT rowid, * FROM stored_messages").fetchone()
+                            # Don't send if there is no data
+                            if row is None:
+                                break
+                            else:
+                                log.info(f"Publishing cache entry {row[0]}")
+                                # Publish cached data
+                                if mqttc.publish("python/mqtt", row[1]):
+                                    # If the message was successfully sent, remove it from local storage
+                                    db_cursor.execute("DELETE FROM stored_messages WHERE rowid = ?", (row[0],))
+                                    connection.commit()
+                    else:
+                        # Save data locally if it can't connect
+                        log.info("Unable to publish, saving locally")
+                        device.set_led(60, 0, 0)
+                        db_cursor.execute("INSERT INTO stored_messages VALUES (?)", (json.dumps(message_payload),))
+                        connection.commit()
+
+                # Sleep for the remaining time, accounting for the time needed for the sending code above
+                sleep_time = ref_time - time.monotonic() + loop_rest
+                if sleep_time > 0:
+                    time.sleep(sleep_time)
 
 
 if __name__ == "__main__":
