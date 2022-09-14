@@ -53,34 +53,28 @@ class Device:
         except:
             pass
 
-    # Properties are similar to getters/setters
-    # from other languages
-    @property
-    def temperature(self):
+    def get_temperature(self):
         if self._air_sensor is not None:
             if self._air_sensor.get_sensor_data():
                 # Degrees Celsius
                 return self._air_sensor.data.temperature
         return None
 
-    @property
-    def humidity(self):
+    def get_humidity(self):
         if self._air_sensor is not None:
             if self._air_sensor.get_sensor_data():
                 # Relative humidity (%)
                 return self._air_sensor.data.humidity
         return None
     
-    @property
-    def air_pressure(self):
+    def get_air_pressure(self):
         if self._air_sensor is not None:
             if self._air_sensor.get_sensor_data():
                 # hectoPascals (hPa)
                 return self._air_sensor.data.pressure
         return None
 
-    @property
-    def network_info(self):
+    def get_network_info(self):
         info = {}
 
         # Splits the response into a list
@@ -115,12 +109,11 @@ class Device:
         else:
             return None
 
-    @property
-    def location(self):
+    def get_location(self):
         try:
             packet = gpsd.get_current()
         except UserWarning:
-            log.warning("Unable to connect to local GPSD server")
+            # log.warning("Unable to connect to local GPSD server")
             packet = None
 
         # Packet mode - 0 = no data, 1 = no fix, 2 = 2D fix, 3 = 3D fix
@@ -142,8 +135,7 @@ class Device:
                 "fix": False
             }
         
-    @property
-    def battery_info(self):
+    def get_battery_info(self):
         try:
             basic_stats = self._battery.status.GetStatus()["data"]["battery"]
         except KeyError:

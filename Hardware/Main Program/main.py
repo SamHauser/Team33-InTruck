@@ -28,10 +28,10 @@ MQTT_USERNAME = config('MQTT_USERNAME')
 MQTT_PASS = config('MQTT_PASSWORD')
 
 class MessageElement:
-    def __init__(self, name: str, send_freq: float, data):
+    def __init__(self, name: str, send_freq: float, get_data_func: callable):
         self.name = name
         self.send_freq = send_freq
-        self.data = data
+        self.get_data = get_data_func
         self.last_sent = 0
 
 def exit_handler(device):
@@ -57,15 +57,15 @@ def main():
         time.sleep(0.1)
 
     # Create list of what to include in the json payload
+    # For the lambda: the function should run whenever a message is generated. Using lambda will make it evaluate new data each time.
     message_elements = [
-        # MessageElement("location", 1, device.location),
-        MessageElement("network", 5, device.network_info),
-        MessageElement("environment", 5, {
-            "temperature": device.temperature,
-            "humidity": device.humidity,
-            "air_pressure": device.air_pressure
+        MessageElement("location", 1, device.get_location),
+        MessageElement("environment", 5, lambda: {
+            "temperature": device.get_temperature(),
+            "humidity": device.get_humidity(),
+            "air_pressure": device.get_air_pressure()
         }),
-        MessageElement("battery", 10, device.battery_info)
+        MessageElement("battery", 10, device.get_battery_info)
     ]
 
     # loop_rest = gcd([element.send_freq for element in message_elements])
@@ -83,8 +83,8 @@ def main():
                 ref_time = time.monotonic()
                 for element in message_elements:
                     # Only collect data if it's been enough time since it was last sent
-                    if ref_time - element.last_sent > element.send_freq and element.data is not None:
-                        message_payload[element.name] = element.data
+                    if ref_time - element.last_sent > element.send_freq:
+                        message_payload[element.name] = element.get_data()
                         element.last_sent = ref_time
                 
                 if len(message_payload) != 0:
