@@ -10,16 +10,16 @@ from server.database import (
 from server.models import (
     ErrorResponseModel,
     ResponseModel,
-    ClientSchema,
-    UpdateClient,
+    DeviceSchema,
+    UpdateDevice,
 )
 
-router = APIRouter()
+configRouter = APIRouter()
 
 # Add or Update, a users config
-@router.post("/", response_description="Config data added into the database")
-async def add_update_client(clientConfig: ClientSchema = Body(...)):
-    Config = jsonable_encoder(clientConfig)
+@configRouter.post("/", response_description="Config data added into the database")
+async def add_update_client(deviceConfig: DeviceSchema = Body(...)):
+    Config = jsonable_encoder(deviceConfig)
     updatedConfig = await updateConfig(Config)
     if updateConfig == "Update Successful":
         return ResponseModel(updatedConfig, "Config Updated successfully.")
@@ -31,9 +31,9 @@ async def add_update_client(clientConfig: ClientSchema = Body(...)):
         return ErrorResponseModel("An error occurred.", 418, "Could not create")
 
 #  Get a users config using the user_id and device_name
-@router.get("/getConfig/", response_description="User config data retrieved")
-async def get_client_config_data(user_id: str, device_name: str):
-    config = await retrieveConfig(user_id, device_name)
+@configRouter.get("/getConfig/{device_name}", response_description="Device config data retrieved")
+async def get_client_config_data(device_name: str):
+    config = await retrieveConfig(device_name)
     if config:
-        return ResponseModel(config, "User config retrieved successfully")
-    return ErrorResponseModel("An error occurred.", 404, "User config doesn't exist.")
+        return ResponseModel(config, "Device config retrieved successfully")
+    return ErrorResponseModel("An error occurred.", 404, "Device config doesn't exist.")
