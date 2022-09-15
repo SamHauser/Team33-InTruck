@@ -1,6 +1,7 @@
 from pijuice import PiJuice # Import the battery module
 import bme680 # Air quality sensor
 import gpsd # Import GPS library
+import msa301 #Accelerometer
 from at_commander import ATCommander # Send AT commands to Telit module
 import logging
 log = logging.getLogger(__name__)
@@ -24,6 +25,15 @@ class Device:
         except RuntimeError:
             self._air_sensor = None
             log.warning("Unable to detect to air quality sensor")
+        try:
+            log.info("Detecting accelerometer")
+            self._accelerometer = msa301.MSA301()
+            self._accelerometer.reset()
+            self._accelerometer.set_power_mode('normal')
+            self._accelerometer.enable_interrupt(['freefall_interrupt'])
+        except RuntimeError:
+            self._accelerometer = None
+            log.warning("Unable to detect accelerometer")    
         self._start_cellular()
         self._enable_gps()
         gpsd.connect()
@@ -73,6 +83,11 @@ class Device:
                 # hectoPascals (hPa)
                 return self._air_sensor.data.pressure
         return None
+
+    def wait_for_freefall(event):#used by thread to detect interrupt
+        while True:
+            accel.wait_for_interrupt('freefall_interrupt', polling_delay=0.05)
+            event.set() #sets the event flag
 
     def get_network_info(self):
         info = {}
