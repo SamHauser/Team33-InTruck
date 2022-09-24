@@ -65,7 +65,8 @@ def main():
             "humidity": device.get_humidity(),
             "air_pressure": device.get_air_pressure()
         }),
-        MessageElement("battery", 10, device.get_battery_info)
+        MessageElement("battery", 10, device.get_battery_info),
+        MessageElement("network", 10, device.get_network_info)
     ]
 
     # loop_rest = gcd([element.send_freq for element in message_elements])
