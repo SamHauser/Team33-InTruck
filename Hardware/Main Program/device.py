@@ -2,8 +2,11 @@ from pijuice import PiJuice # Import the battery module
 import bme680 # Air quality sensor
 import gpsd # Import GPS library
 import msa301 #Accelerometer
+from bh1745 import BH1745
 from at_commander import ATCommander # Send AT commands to Telit module
 import logging
+from threading import Event
+import time
 log = logging.getLogger(__name__)
 
 class Device:
@@ -33,7 +36,16 @@ class Device:
             self._accelerometer.enable_interrupt(['freefall_interrupt'])
         except RuntimeError:
             self._accelerometer = None
-            log.warning("Unable to detect accelerometer")    
+            log.warning("Unable to detect accelerometer")   
+        try:
+            log.info("Detecting Luminance Sensor")
+            self._luminance = BH1745()
+            self._luminance.setup()
+            self._luminance.set_leds(0)
+            self._luminance.set_measurement_time_ms(2560)
+        except RuntimeError:
+            self._luminance = None
+            log.warning("unable to detect luminance sensor")
         self._start_cellular()
         self._enable_gps()
         gpsd.connect()
@@ -155,19 +167,21 @@ class Device:
             basic_stats = self._battery.status.GetStatus()["data"]["battery"]
         except KeyError:
             battery_present = False
-        if basic_stats in ["CHARGING_FROM_IN", "CHARGING_FROM_5V_IO"]:
-            charging = True
-            battery_present = True
-        elif basic_stats == "NORMAL":
-            charging = False
-            battery_present = True
-        elif basic_stats == "NOT_PRESENT":
-            charging = False
-            battery_present = False
-        else:
-            charging = None
-            battery_present = None
-        
+        try:
+            if basic_stats in ["CHARGING_FROM_IN", "CHARGING_FROM_5V_IO"]:
+                charging = True
+                battery_present = True
+            elif basic_stats == "NORMAL":
+                charging = False
+                battery_present = True
+            elif basic_stats == "NOT_PRESENT":
+                charging = False
+                battery_present = False
+            else:
+                charging = None
+                battery_present = None
+        except NameError:
+            battery_present = False #catches error if battery isnt there
         if battery_present:
             return {
                 "installed": battery_present,
@@ -182,3 +196,21 @@ class Device:
             return {
                 "installed": battery_present,
             }
+
+    def wait_for_freefall(self, event):#used by thread to detect interrupt
+        while True:
+            self._accelerometer.wait_for_interrupt('freefall_interrupt', polling_delay=0.05)
+            event.set()
+
+    def detect_door_open(self, event):
+        while True:
+            r, g, b= self._luminance.get_rgb_scaled()
+            log.info('RGB: {:10.1f} {:10.1f} {:10.1f}'.format(r, g, b))
+            rgb_data = [r,g,b]
+            for x in rgb_data:
+                if x > 10:
+                    event.set()#door must be open
+            time.sleep(2)#exposure time
+             
+
+          

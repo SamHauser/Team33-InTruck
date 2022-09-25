@@ -2,6 +2,9 @@ import logging
 from logging.handlers import RotatingFileHandler
 from device import Device
 from mqtt_connector import MqttConnector
+from threading import Event
+from threading import Thread
+
 import time
 import json
 import socket
@@ -38,6 +41,7 @@ def exit_handler(device):
     log.info("-----Exiting-----")
     # Turn off led when program is quit
     device.set_led(0, 0, 0)
+
 
 
 def main():
@@ -77,8 +81,31 @@ def main():
             # Configure local storage
             db_cursor.execute("CREATE TABLE IF NOT EXISTS stored_messages (json_payload TEXT)")
             connection.commit()
+            luminance_event = Event()
+            luminance_thread = Thread(target=device.detect_door_open, args=(luminance_event,))
+            freefall_event = Event()
+            freefall_thread = Thread(target=device.wait_for_freefall,args =(freefall_event,))
             # Main loop for device
             while True:
+                
+                if not freefall_thread.is_alive():
+                    freefall_thread.start()
+                if not luminance_thread.is_alive():
+                    luminance_thread.start()
+                
+                if freefall_event.is_set():
+                    log.info("Freefall Detected")
+                    freefall_event.clear()
+                else:
+                    log.info("Freefall Not Detected")
+                
+                if luminance_event.is_set():
+                    log.info("Door opened")
+                    luminance_event.clear()
+                else:
+                    log.info("Door Closed")
+             
+
                 message_payload = {}
                 # Monotonic time always counts up and is unrelated to device time/timezone changes
                 ref_time = time.monotonic()
@@ -121,6 +148,7 @@ def main():
                 sleep_time = ref_time - time.monotonic() + loop_rest
                 if sleep_time > 0:
                     time.sleep(sleep_time)
+                
 
 
 if __name__ == "__main__":
