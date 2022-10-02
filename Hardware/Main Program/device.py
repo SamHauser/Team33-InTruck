@@ -211,6 +211,18 @@ class Device:
                 if x > 10:
                     event.set()#door must be open
             time.sleep(2)#exposure time
-             
+
+    def check_for_freefall(self, event): #for payload
+        if event.is_set():
+            return True
+        else:
+            return False:
+
+    def check_door_open(self, event):
+        if event.is_set():
+            return True
+        else:
+            return False:
+
 
           
