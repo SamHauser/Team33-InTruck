@@ -214,15 +214,19 @@ class Device:
 
     def check_for_freefall(self, event): #for payload
         if event.is_set():
+            event.clear()
             return True
         else:
-            return False:
+            return False
 
     def check_door_open(self, event):
         if event.is_set():
+            event.clear()
             return True
         else:
-            return False:
+            return False
 
+    
+   
 
           

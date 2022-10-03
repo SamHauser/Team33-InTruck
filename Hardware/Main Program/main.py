@@ -44,6 +44,7 @@ def exit_handler(device):
 
 
 
+
 def main():
     log.info("-----Starting application-----")
     device = Device()
@@ -51,6 +52,11 @@ def main():
     atexit.register(exit_handler, device)
     # Set LED to blue to indicate initial connection
     device.set_led(0, 0, 100)
+    
+    luminance_event = Event()
+    luminance_thread = Thread(target=device.detect_door_open, args=(luminance_event,))
+    freefall_event = Event()
+    freefall_thread = Thread(target=device.wait_for_freefall,args =(freefall_event,))
 
     mqttc = MqttConnector()
     mqttc.connect(MQTT_ADDRESS, MQTT_PORT, DEVICE_NAME, MQTT_USERNAME, MQTT_PASS)
@@ -70,7 +76,11 @@ def main():
             "air_pressure": device.get_air_pressure()
         }),
         MessageElement("battery", 10, device.get_battery_info),
-        MessageElement("network", 10, device.get_network_info)
+        MessageElement("network", 10, device.get_network_info),
+        MessageElement("alerts", 0, lambda: {       
+            "freefall": device.check_for_freefall(freefall_event),
+            "door": device.check_door_open(luminance_event)
+        })
     ]
 
     # loop_rest = gcd([element.send_freq for element in message_elements])
@@ -81,10 +91,7 @@ def main():
             # Configure local storage
             db_cursor.execute("CREATE TABLE IF NOT EXISTS stored_messages (json_payload TEXT)")
             connection.commit()
-            luminance_event = Event()
-            luminance_thread = Thread(target=device.detect_door_open, args=(luminance_event,))
-            freefall_event = Event()
-            freefall_thread = Thread(target=device.wait_for_freefall,args =(freefall_event,))
+           
             # Main loop for device
             while True:
                 
@@ -93,28 +100,20 @@ def main():
                 if not luminance_thread.is_alive():
                     luminance_thread.start()
                 
-                if freefall_event.is_set():
-                    log.info("Freefall Detected")
-                    freefall_event.clear()
-                else:
-                    log.info("Freefall Not Detected")
-                
-                if luminance_event.is_set():
-                    log.info("Door opened")
-                    luminance_event.clear()
-                else:
-                    log.info("Door Closed")
-             
-
+           
                 message_payload = {}
                 # Monotonic time always counts up and is unrelated to device time/timezone changes
                 ref_time = time.monotonic()
                 for element in message_elements:
                     # Only collect data if it's been enough time since it was last sent
                     if ref_time - element.last_sent > element.send_freq:
-                        message_payload[element.name] = element.get_data()
-                        element.last_sent = ref_time
+                        element_data = element.get_data()
+                        #if one alert is true, both are sent regardless @eamonn pls fix
+                        if any(x!=False for x in element_data.values()): 
+                            message_payload[element.name] = element_data
+                            element.last_sent = ref_time
                 
+                print(message_payload)
                 if len(message_payload) != 0:
                     # Add device name and timestamp
                     message_payload["device_name"] = DEVICE_NAME
