@@ -7,5 +7,7 @@ const COLOURS = [
     "#77797d",//Primary Text
 ]
 
+const FIELD_WIDTH = 180
 
-export { COLOURS }
+
+export { COLOURS, FIELD_WIDTH }

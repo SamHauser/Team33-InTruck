@@ -7,6 +7,7 @@ import { Button, Card, CardActions, CardContent, CardMedia, Typography } from "@
 import { Component } from "react"
 import { COLOURS } from "./config"
 import Input from "./fields/Input"
+import { apiLoginCall, apiTokenCall } from "./generics/APIFunctions"
 
 const styles = {
     card: {
@@ -45,11 +46,17 @@ export default class Login extends Component {
         }
     }
 
-    handleLogin = () => {
+    handleLogin = (devMode) => {
+        const { username, password } = this.state
+        if (devMode) {
+            this.GETlogin("frontend", "spectreplum")
+            return
+        }
+
         //Validation
         let errMsg = ""
-        if (this.state.username === "") { errMsg = "Username is empty" }
-        if (this.state.password === "") { errMsg = "Password is empty" }
+        if (username === "") { errMsg = "Username is empty" }
+        if (password === "") { errMsg = "Password is empty" }
 
 
         //If validation fails
@@ -60,8 +67,39 @@ export default class Login extends Component {
             return
         }
 
-        sessionStorage.setItem("logged-in", "true")
-        window.open('./', "_self")
+        this.GETlogin(username, password)
+    }
+
+    GETlogin = (username, password) => {
+        const url = `users/login/${username}, ${btoa(password)}`
+        const callback = d => {
+            if (d.code === 200) {
+                this.GETtoken(username, password)
+            } else {
+                this.setState({
+                    errMsg: "Incorrect Username or Password"
+                })
+            }
+
+        }
+        const error = e => {
+            console.error(e)
+        }
+
+        apiLoginCall(url, callback, error)
+    }
+
+    GETtoken = (username, password) => {
+        const url = `users/token`
+        const body = `username=${username}&password=${btoa(password)}`
+        const callback = d => {
+            sessionStorage.setItem("token", d.access_token)
+            window.open('./', "_self")
+        }
+        const error = e => {
+            console.error(e)
+        }
+        apiTokenCall(url, body, callback, error)
     }
 
     render() {
@@ -105,9 +143,19 @@ export default class Login extends Component {
                     <CardActions className="center">
                         <Button
                             size="large"
-                            onClick={this.handleLogin}
+                            onClick={() => this.handleLogin(false)}
                         >
                             Login
+                        </Button>
+                    </CardActions>
+
+                    {/*Dev Button */}
+                    <CardActions className="center">
+                        <Button
+                            size="large"
+                            onClick={() => this.handleLogin(true)}
+                        >
+                            DEV LOGIN
                         </Button>
                     </CardActions>
                 </Card>

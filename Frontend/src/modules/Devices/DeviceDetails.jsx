@@ -1,28 +1,66 @@
 /**
  * PROPS
  * -----
- * truck - detail data
+ deviceName
  */
 
-import { AcUnit, HourglassTop, Speed, Thermostat, Water } from "@mui/icons-material"
-import { TextField } from "@mui/material"
+import { HourglassTop, Speed, Thermostat, Water } from "@mui/icons-material"
 import { Component } from "react"
-import { COLOURS } from "../config"
-import Input from "../fields/Input"
-import Title from "../fields/Title"
-import InfoBlock from "./InfoBlock"
-import Map from "./Map"
+import { COLOURS } from "../../config"
+import Input from "../../fields/Input"
+import Title from "../../fields/Title"
+import { apiGetCall } from "../../generics/APIFunctions"
+import InfoBlock from "../InfoBlock"
+import Map from "../Map"
 
 const styles = {
+    container: {
+        padding: "0 10px",
+
+    },
+    title: {
+        whiteSpace: "nowrap"
+    },
     input: {
         marginBottom: "2%"
     }
 }
 
-export default class TruckDetails extends Component {
+export default class DeviceDetails extends Component {
     constructor(props) {
         super(props)
         this.state = {
+        }
+    }
+
+    GETdeviceDetails = () => {
+        const url = `device/getDeviceData/${this.props.deviceName}`
+        const callback = data => {
+            console.log(data)
+
+        }
+        const error = e => {
+
+        }
+        apiGetCall(url, callback, error, true)
+
+    }
+
+    GETdeviceConfig = () => {
+        const url = `config/getConfig/${this.props.deviceName}`
+        const callback = d => {
+
+        }
+        const error = e => {
+            console.error(e)
+        }
+        apiGetCall(url, callback, error)
+    }
+
+    componentDidUpdate(prevProps) {
+        if (prevProps.deviceName !== this.props.deviceName) {
+            //this.GETdeviceDetails()
+            this.GETdeviceConfig()
         }
     }
 
@@ -33,8 +71,8 @@ export default class TruckDetails extends Component {
         }
 
         return (
-            <article className="pad">
-                <Title label="Truck Details" />
+            <article className="pad" style={styles.container}>
+                <h2 style={styles.title}>Truck Details</h2>
 
                 {/*Details*/}
                 {truck === null ?
