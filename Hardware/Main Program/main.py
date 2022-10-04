@@ -42,8 +42,15 @@ def exit_handler(device):
     # Turn off led when program is quit
     device.set_led(0, 0, 0)
 
-
-
+def build_msg_nest(section_input: dict):
+    section_result = {}
+    for key, value in section_input.items():
+        if value:
+            section_result[key] = value
+    if section_result:
+        return section_result
+    else:
+        return None
 
 def main():
     log.info("-----Starting application-----")
@@ -70,20 +77,23 @@ def main():
     # For the lambda: the function should run whenever a message is generated. Using lambda will make it evaluate new data each time.
     message_elements = [
         MessageElement("location", 1, device.get_location),
-        MessageElement("environment", 5, lambda: {
-            "temperature": device.get_temperature(),
-            "humidity": device.get_humidity(),
-            "air_pressure": device.get_air_pressure()
-        }),
+        MessageElement("environment", 5, lambda: build_msg_nest(
+            {
+                "temperature": device.get_temperature(),
+                "humidity": device.get_humidity(),
+                "air_pressure": device.get_air_pressure()
+            }
+        )),
         MessageElement("battery", 10, device.get_battery_info),
         MessageElement("network", 10, device.get_network_info),
-        MessageElement("alerts", 0, lambda: {       
-            "freefall": device.check_for_freefall(freefall_event),
-            "door": device.check_door_open(luminance_event)
-        })
+        MessageElement("alerts", 0, lambda: build_msg_nest(
+            {
+                "freefall": device.check_for_freefall(freefall_event),
+                "door": device.check_door_open(luminance_event)
+            }
+        ))
     ]
 
-    # loop_rest = gcd([element.send_freq for element in message_elements])
     loop_rest = 1
 
     with closing(sqlite3.connect("local_cache.db")) as connection:
@@ -100,7 +110,6 @@ def main():
                 if not luminance_thread.is_alive():
                     luminance_thread.start()
                 
-           
                 message_payload = {}
                 # Monotonic time always counts up and is unrelated to device time/timezone changes
                 ref_time = time.monotonic()
@@ -108,12 +117,11 @@ def main():
                     # Only collect data if it's been enough time since it was last sent
                     if ref_time - element.last_sent > element.send_freq:
                         element_data = element.get_data()
-                        #if one alert is true, both are sent regardless @eamonn pls fix
-                        if any(x!=False for x in element_data.values()): 
+                        # Only add data to payload if it is meaningful
+                        if element_data is not None:
                             message_payload[element.name] = element_data
                             element.last_sent = ref_time
                 
-                print(message_payload)
                 if len(message_payload) != 0:
                     # Add device name and timestamp
                     message_payload["device_name"] = DEVICE_NAME
