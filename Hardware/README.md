@@ -33,6 +33,10 @@ For a detailed setup guide, head to the [setup folder](./Setup/).
 
 ### Powering on
 
-### Buttons
+The device will automatically power on when a cabled power source is connected (e.g. USB-C or USB Micro-B). To power on with just a battery inserted, press and release SW1 (refer to the next section for button labels). The main program will start automatically.
 
-### Status indicators
+### Buttons and Status Indicators
+
+With a PiJuice HAT installed, the below image shows the features of the buttons and LEDs:
+
+![Annotated picture of the device showing labelled buttons and LEDs](./Button_and_LED_Quick_Reference.png)
