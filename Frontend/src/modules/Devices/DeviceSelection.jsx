@@ -38,7 +38,7 @@ export default class DeviceSelection extends Component {
         const error = e => {
             console.error(e)
         }
-        apiGetCall(url, callback, error)
+        apiGetCall(url, callback, error, false, true)
     }
 
     componentDidMount() {

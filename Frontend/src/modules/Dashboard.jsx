@@ -82,6 +82,7 @@ export default class Dashboard extends Component {
         const url = "device/getLatestEntry"
         const callback = d => {
             d = { rows: d }
+            // console.log(d)
 
             //Set marker locations
             let markers = []

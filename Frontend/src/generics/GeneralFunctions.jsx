@@ -813,6 +813,13 @@ function getLongLat(returnCallback, error) {
     }
 }
 
+//Returns a string if the value is empty
+function valueOrEmpty(value) {
+    if (isEmpty(value)) {
+        return "No data"
+    }
+    return value
+}
 
 
 
@@ -854,6 +861,7 @@ export {
     stringListFromArray,
     convertTimeZoneOffset,
     isEmpty,
+    valueOrEmpty,
     checkRoleAuth,
     getLongLat,
 };

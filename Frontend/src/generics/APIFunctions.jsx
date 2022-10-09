@@ -49,7 +49,7 @@ function returnToLogin() {
 }
 
 
-async function apiGetCall(url, callback, error, isList) {
+async function apiGetCall(url, callback, error, isList, isString) {
     url = encodeUrl(url);
     const bearer = `Bearer ${sessionStorage.getItem("token")}`
 
@@ -73,6 +73,7 @@ async function apiGetCall(url, callback, error, isList) {
             if (data.StatusMessage && data.StatusMessage !== null && messageLevels.includes(data.StatusMessage.MessageLevel)) {
                 return error(data.StatusMessage);
             } else {
+                if (data.code === 404) { return error(data.message) }
                 data = data.data
                 if (isList) {
                     data = data[0]
@@ -81,8 +82,10 @@ async function apiGetCall(url, callback, error, isList) {
                         arr.push(JSON.parse(row))
                     }
                     return callback(arr)
-                } else {
+                } else if (isString) {
                     return callback(JSON.parse(data));
+                } else {
+                    return callback(data)
                 }
             }
         }
