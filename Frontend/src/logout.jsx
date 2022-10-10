@@ -13,7 +13,7 @@ export default class LogoutPage extends Component {
     }
 
     componentDidMount() {
-        sessionStorage.removeItem("logged-in")
+        sessionStorage.removeItem("token")
         sessionStorage.setItem("lastPage", JSON.stringify("Dashboard"))
         window.open("./", "_self")
     }

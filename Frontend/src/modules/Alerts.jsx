@@ -1,11 +1,13 @@
 /**
  * PROPS
  * -----
+ * latestData
  */
-import { AcUnit, Lightbulb, LightbulbCircle, Visibility } from "@mui/icons-material"
-import { Avatar, List, ListItem, ListItemAvatar, ListItemText } from "@mui/material"
+import { AcUnit, Lightbulb, LightbulbCircle, SensorDoor, Visibility } from "@mui/icons-material"
+import { Avatar, iconClasses, List, ListItem, ListItemAvatar, ListItemText } from "@mui/material"
 import { Component } from "react"
 import { COLOURS } from "../config"
+import moment from 'moment'
 import Title from "../fields/Title"
 
 const styles = {
@@ -44,11 +46,51 @@ const tempData = [
     },
 ]
 
+const icons = {
+    door: <SensorDoor />
+}
+
 export default class Alerts extends Component {
     constructor(props) {
         super(props)
         this.state = {
+            alerts: []
+        }
+    }
 
+    formatData = () => {
+        const data = this.props.latestData
+        let alerts = []
+        for (let truck of data) {
+            const alert = truck.alert
+            if (!truck.alert) { continue }
+
+            const time = moment.unix(truck.timestamp).format("DD/MM/YYYY hh:mm:ss")
+            alerts.push(
+                {
+                    title: time,
+                    icon: icons[alert.type],
+                    description: alert.type,
+                    time: truck.timestamp
+                }
+            )
+        }
+        alerts.sort((a, b) => {
+            if (a.time > b.time) {
+                return -1
+            }
+            return 1
+        })
+
+        this.setState({
+            alerts: alerts
+        })
+
+    }
+
+    componentDidUpdate(prevProps) {
+        if (prevProps.latestData !== this.props.latestData) {
+            this.formatData()
         }
     }
 
@@ -59,7 +101,7 @@ export default class Alerts extends Component {
 
 
                 <List style={styles.container}>
-                    {tempData.map((row, i) => (
+                    {this.state.alerts.map((row, i) => (
                         <ListItem key={i}>
                             {/*Icon */}
                             <ListItemAvatar>
