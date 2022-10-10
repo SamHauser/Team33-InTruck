@@ -9,7 +9,7 @@
 - Eamonn 🦎
 - Harrison ◻️
 - Nathaniel ◻️
-- Samuel ◻️
+- Samuel :shipit:
 
 ## What is InTruck?
 
