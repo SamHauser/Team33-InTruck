@@ -41,12 +41,24 @@ export default class BasicField extends Component {
                     "& .MuiOutlinedInput-root":
                     {
                         "& > fieldset":
-                            { borderColor: COLOURS[3] }
+                        {
+                            borderColor: COLOURS[3],
+                        }
+
                     },
                     "& .MuiSelect-outlined": {
                         paddingTop: "10px",
                         paddingBottom: "10px",
-                    }
+                    },
+                    "& .MuiInputBase-input.Mui-disabled": {
+                        "-webkitTextFillColor": "#a0a0a0",
+                    },
+                    "& .MuiInputBase-root.Mui-disabled": {
+                        "& > fieldset":
+                        {
+                            borderColor: COLOURS[3]
+                        }
+                    },
                 }}
                 variant={this.props.variant ? this.props.variant : "outlined"}
                 style={{
@@ -54,7 +66,7 @@ export default class BasicField extends Component {
                     ...{
                         width: this.props.width ? this.props.width : FIELD_WIDTH,
                         height: this.props.multiline ? 25 * this.props.lines : 40,
-                        backgroundColor: this.props.disabled ? "#eeeeee" : "",
+                        color: "white"
                     }
                 }}
                 inputProps={{

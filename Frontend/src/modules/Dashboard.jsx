@@ -147,18 +147,6 @@ export default class Dashboard extends Component {
                     icon={<BatteryCharging20 />}
                     value={this.state.latestData.onCharge}
                 />
-
-                {lineData.map((d, i) => (
-                    <Module key={i} width={3} height={1}>
-                        <InfoLine
-                            key={i}
-                            colour={COLOURS[i + 2]}
-                            {...d}
-                            size={3}
-                            data={saleData}
-                        />
-                    </Module>
-                ))}
             </section>
 
             {/*Map*/}
