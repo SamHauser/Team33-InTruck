@@ -49,6 +49,7 @@ export default class Users extends Component {
 
                 {/*Users List*/}
                 <PeerTable2
+                    name="Users"
                     url="users/getAll"
                     columns={dataFormat}
                     onRowClick={this.handleRow}

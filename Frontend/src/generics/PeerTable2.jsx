@@ -92,6 +92,7 @@ export default class PeerTable2 extends Component {
 
         return (
             <DataGrid
+                data-testid={`table-${this.props.name}`}
                 autoHeight
                 rows={this.state.data}
                 pageSize={!this.props.pageSize ? 10 : ""}
