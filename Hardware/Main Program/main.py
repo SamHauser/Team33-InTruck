@@ -62,8 +62,10 @@ def main():
     
     luminance_event = Event()
     luminance_thread = Thread(target=device.detect_door_open, args=(luminance_event,))
+    luminance_thread.setDaemon(True)
     freefall_event = Event()
     freefall_thread = Thread(target=device.wait_for_freefall,args =(freefall_event,))
+    freefall_thread.setDaemon(True)
 
     mqttc = MqttConnector()
     mqttc.connect(MQTT_ADDRESS, MQTT_PORT, DEVICE_NAME, MQTT_USERNAME, MQTT_PASS)
