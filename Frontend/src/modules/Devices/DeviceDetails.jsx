@@ -64,10 +64,11 @@ export default class DeviceDetails extends Component {
 
     GETdeviceDetails = () => {
         const url = `device/getDeviceData/${this.props.deviceName}`
+        const keys = ["network", "battery", "environment", "timestamp", "device_name", "alert"]
         const callback = data => {
             let truck = {}
             //Convert each row of data into an array of entries
-            for (let key in data[0]) {
+            for (let key of keys) {
                 truck[key] = []
                 for (let row of data) {
                     if (row[key]) {
@@ -76,10 +77,10 @@ export default class DeviceDetails extends Component {
                 }
             }
 
-            truck.device_name = truck.device_name[0]
+            truck.device_name = truck.device_name[data.length - 1]
             this.setState({
                 truck: truck,
-                loading: false
+                loading: false,
             })
 
         }
@@ -123,6 +124,12 @@ export default class DeviceDetails extends Component {
             console.error(e)
         }
         apiPostCall(url, "POST", body, callback, error)
+    }
+
+    componentDidMount() {
+        setInterval(() => {
+            this.GETdeviceDetails()
+        }, 10000);
     }
 
     componentDidUpdate(prevProps) {
@@ -195,118 +202,123 @@ export default class DeviceDetails extends Component {
 
 
                 {/*Details*/}
-                {this.state.loading ?
-                    <CircularProgress /> : truck === null ?
-                        <h5>No Truck selected</h5> :
+                {truck === null ?
+                    <h5>No Truck selected</h5> :
 
+                    <article>
+                        {/* Configuration */}
+                        {config.device_name &&
+                            <article style={styles.configContainer}>
+
+                                <h3 style={styles.configTitle}>Configuration</h3>
+
+                                <section className="wrap">
+                                    {/*ID*/}
+                                    <BasicField
+                                        disabled
+                                        label="Name"
+                                        value={config.device_name}
+                                        onChange={this.handleChange}
+                                        style={styles.input}
+                                        name="device_name"
+                                    />
+
+                                    {/*Registration*/}
+                                    <BasicField
+                                        label="Registration"
+                                        value={config.vehicle_rego}
+                                        style={styles.input}
+                                        onChange={this.handleChange}
+                                        name="vehicle_rego"
+
+                                    />
+                                    {/*Max Humidity*/}
+                                    <BasicField
+                                        label="Maximum Humidity"
+                                        value={config.max_hum}
+                                        style={styles.input}
+                                        onChange={this.handleChange}
+                                        name="max_hum"
+                                    />
+                                    {/*Min Humidity*/}
+                                    <BasicField
+                                        label="Minimum Humidity"
+                                        value={config.min_hum}
+                                        style={styles.input}
+                                        onChange={this.handleChange}
+                                        name="min_hum"
+                                    />
+                                    {/*Max Temperature*/}
+                                    <BasicField
+                                        label="Maximum Temperature"
+                                        value={config.max_temp}
+                                        style={styles.input}
+                                        onChange={this.handleChange}
+                                        name="max_temp"
+                                    />
+                                    {/*Min Temperature*/}
+                                    <BasicField
+                                        label="Minimum Temperature"
+                                        value={config.min_temp}
+                                        style={styles.input}
+                                        onChange={this.handleChange}
+                                        name="min_temp"
+                                    />
+                                </section>
+
+                                <section className="end">
+                                    <Button
+                                        variant="outlined"
+                                        onClick={this.handleSaveConfig}
+                                    >
+                                        Save Config
+                                    </Button>
+                                </section>
+
+                            </article>
+                        }
+
+                        {/*Device Info*/}
                         <article>
-                            {/* Configuration */}
-                            {config.device_name &&
-                                <article style={styles.configContainer}>
-
-                                    <h3 style={styles.configTitle}>Configuration</h3>
-
-                                    <section className="wrap">
-                                        {/*ID*/}
-                                        <BasicField
-                                            disabled
-                                            label="Name"
-                                            value={config.device_name}
-                                            onChange={this.handleChange}
-                                            style={styles.input}
-                                            name="device_name"
-                                        />
-
-                                        {/*Registration*/}
-                                        <BasicField
-                                            label="Registration"
-                                            value={config.vehicle_rego}
-                                            style={styles.input}
-                                            onChange={this.handleChange}
-                                            name="vehicle_rego"
-
-                                        />
-                                        {/*Max Humidity*/}
-                                        <BasicField
-                                            label="Maximum Humidity"
-                                            value={config.max_hum}
-                                            style={styles.input}
-                                            onChange={this.handleChange}
-                                            name="max_hum"
-                                        />
-                                        {/*Min Humidity*/}
-                                        <BasicField
-                                            label="Minimum Humidity"
-                                            value={config.min_hum}
-                                            style={styles.input}
-                                            onChange={this.handleChange}
-                                            name="min_hum"
-                                        />
-                                        {/*Max Temperature*/}
-                                        <BasicField
-                                            label="Maximum Temperature"
-                                            value={config.max_temp}
-                                            style={styles.input}
-                                            onChange={this.handleChange}
-                                            name="max_temp"
-                                        />
-                                        {/*Min Temperature*/}
-                                        <BasicField
-                                            label="Minimum Temperature"
-                                            value={config.min_temp}
-                                            style={styles.input}
-                                            onChange={this.handleChange}
-                                            name="min_temp"
-                                        />
-                                    </section>
-
-                                    <section className="end">
-                                        <Button
-                                            variant="outlined"
-                                            onClick={this.handleSaveConfig}
-                                        >
-                                            Save Config
-                                        </Button>
-                                    </section>
-
-                                </article>
-                            }
-
                             <section className="wrap around">
 
                                 {/*Current Temp */}
                                 <InfoBlock
                                     label="Temperature"
+                                    loading={this.state.loading}
                                     icon={<Thermostat />}
-                                    value={valueOrEmpty(truck.environment[0].temperature)}
+                                    value={valueOrEmpty(truck.environment[truck.environment.length - 1].temperature)}
                                 />
 
                                 {/*Humidity*/}
                                 <InfoBlock
                                     label="Humidity"
+                                    loading={this.state.loading}
                                     icon={<Water />}
-                                    value={valueOrEmpty(truck.environment[0].humidity)}
+                                    value={valueOrEmpty(truck.environment[truck.environment.length - 1].humidity)}
                                     colour={COLOURS[4]}
                                 />
 
                                 {/*Speed*/}
                                 <InfoBlock
                                     label="Battery"
+                                    loading={this.state.loading}
                                     icon={getBatteryIcon()}
-                                    value={valueOrEmpty(truck.battery[0].charge_level)}
+                                    value={valueOrEmpty(truck.battery[truck.battery.length - 1].charge_level)}
                                     colour={COLOURS[2]}
                                 />
 
                                 {/*Status*/}
                                 <InfoBlock
                                     label="Battery Temperature"
+                                    loading={this.state.loading}
                                     icon={<Thermostat />}
                                     colour={COLOURS[2]}
-                                    value={valueOrEmpty(truck.battery[0].temp)}
+                                    value={valueOrEmpty(truck.battery[truck.battery.length - 1].temp)}
                                 />
 
                             </section>
-                            {(truck.location && truck.location[0].fix) ?
+                            {(truck.location && truck.location[truck.location.length].fix) ?
                                 <Map
                                     markers={[
                                         {
@@ -320,6 +332,7 @@ export default class DeviceDetails extends Component {
 
                             }
                         </article>
+                    </article>
                 }
 
 
