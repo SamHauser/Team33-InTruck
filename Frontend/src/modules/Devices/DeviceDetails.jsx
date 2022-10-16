@@ -5,9 +5,10 @@
  */
 
 import { Battery1Bar, Battery20, Battery50, Battery80, BatteryCharging20, BatteryCharging30, BatteryCharging50, BatteryCharging80, BatteryChargingFull, BatteryFull, BatteryUnknown, HourglassTop, Speed, Thermostat, Water } from "@mui/icons-material"
-import { Button } from "@mui/material"
+import { Button, CircularProgress } from "@mui/material"
 import { Component } from "react"
 import { COLOURS } from "../../config"
+import BasicField from "../../fields/BasicField"
 import Input from "../../fields/Input"
 import Title from "../../fields/Title"
 import { apiGetCall, apiPostCall } from "../../generics/APIFunctions"
@@ -43,7 +44,8 @@ export default class DeviceDetails extends Component {
         super(props)
         this.state = {
             truck: {},
-            config: {}
+            config: {},
+            loading: false,
         }
     }
     handleChange = ev => {
@@ -62,10 +64,11 @@ export default class DeviceDetails extends Component {
 
     GETdeviceDetails = () => {
         const url = `device/getDeviceData/${this.props.deviceName}`
+        const keys = ["network", "battery", "environment", "timestamp", "device_name", "alert"]
         const callback = data => {
             let truck = {}
             //Convert each row of data into an array of entries
-            for (let key in data[0]) {
+            for (let key of keys) {
                 truck[key] = []
                 for (let row of data) {
                     if (row[key]) {
@@ -74,15 +77,23 @@ export default class DeviceDetails extends Component {
                 }
             }
 
-            truck.device_name = truck.device_name[0]
+            truck.device_name = truck.device_name[data.length - 1]
             this.setState({
-                truck: truck
+                truck: truck,
+                loading: false,
             })
 
         }
         const error = e => {
+            this.setState({
+                loading: false
+            })
 
         }
+
+        this.setState({
+            loading: true
+        })
         apiGetCall(url, callback, error, true)
 
     }
@@ -90,7 +101,6 @@ export default class DeviceDetails extends Component {
     GETdeviceConfig = () => {
         const url = `config/getConfig/${this.props.deviceName}`
         const callback = d => {
-            console.log(d[0])
             this.setState({
                 config: d[0]
             })
@@ -116,6 +126,12 @@ export default class DeviceDetails extends Component {
         apiPostCall(url, "POST", body, callback, error)
     }
 
+    componentDidMount() {
+        setInterval(() => {
+            this.GETdeviceDetails()
+        }, 10000);
+    }
+
     componentDidUpdate(prevProps) {
         if (prevProps.deviceName !== this.props.deviceName) {
             this.GETdeviceDetails()
@@ -127,7 +143,7 @@ export default class DeviceDetails extends Component {
         let { truck, config } = this.state
         if (!truck || !truck.device_name) { truck = null }
         const getBatteryIcon = () => {
-            const battery = truck.battery[0]
+            const battery = truck.battery[truck.battery.length - 1]
             //Unknown
             if (isEmpty(battery.charge_level)) {
                 return <BatteryUnknown />
@@ -178,9 +194,12 @@ export default class DeviceDetails extends Component {
             }
         }
 
+
+
         return (
             <article className="pad" style={styles.container}>
                 <h2 style={styles.title}>Truck Details</h2>
+
 
                 {/*Details*/}
                 {truck === null ?
@@ -195,7 +214,7 @@ export default class DeviceDetails extends Component {
 
                                 <section className="wrap">
                                     {/*ID*/}
-                                    <Input
+                                    <BasicField
                                         disabled
                                         label="Name"
                                         value={config.device_name}
@@ -205,7 +224,7 @@ export default class DeviceDetails extends Component {
                                     />
 
                                     {/*Registration*/}
-                                    <Input
+                                    <BasicField
                                         label="Registration"
                                         value={config.vehicle_rego}
                                         style={styles.input}
@@ -214,7 +233,7 @@ export default class DeviceDetails extends Component {
 
                                     />
                                     {/*Max Humidity*/}
-                                    <Input
+                                    <BasicField
                                         label="Maximum Humidity"
                                         value={config.max_hum}
                                         style={styles.input}
@@ -222,7 +241,7 @@ export default class DeviceDetails extends Component {
                                         name="max_hum"
                                     />
                                     {/*Min Humidity*/}
-                                    <Input
+                                    <BasicField
                                         label="Minimum Humidity"
                                         value={config.min_hum}
                                         style={styles.input}
@@ -230,7 +249,7 @@ export default class DeviceDetails extends Component {
                                         name="min_hum"
                                     />
                                     {/*Max Temperature*/}
-                                    <Input
+                                    <BasicField
                                         label="Maximum Temperature"
                                         value={config.max_temp}
                                         style={styles.input}
@@ -238,7 +257,7 @@ export default class DeviceDetails extends Component {
                                         name="max_temp"
                                     />
                                     {/*Min Temperature*/}
-                                    <Input
+                                    <BasicField
                                         label="Minimum Temperature"
                                         value={config.min_temp}
                                         style={styles.input}
@@ -259,53 +278,60 @@ export default class DeviceDetails extends Component {
                             </article>
                         }
 
-                        <section className="wrap around">
+                        {/*Device Info*/}
+                        <article>
+                            <section className="wrap around">
 
-                            {/*Current Temp */}
-                            <InfoBlock
-                                label="Temperature"
-                                icon={<Thermostat />}
-                                value={valueOrEmpty(truck.environment[0].temperature)}
-                            />
+                                {/*Current Temp */}
+                                <InfoBlock
+                                    label="Temperature"
+                                    loading={this.state.loading}
+                                    icon={<Thermostat />}
+                                    value={valueOrEmpty(truck.environment[truck.environment.length - 1].temperature)}
+                                />
 
-                            {/*Humidity*/}
-                            <InfoBlock
-                                label="Humidity"
-                                icon={<Water />}
-                                value={valueOrEmpty(truck.environment[0].humidity)}
-                                colour={COLOURS[4]}
-                            />
+                                {/*Humidity*/}
+                                <InfoBlock
+                                    label="Humidity"
+                                    loading={this.state.loading}
+                                    icon={<Water />}
+                                    value={valueOrEmpty(truck.environment[truck.environment.length - 1].humidity)}
+                                    colour={COLOURS[4]}
+                                />
 
-                            {/*Speed*/}
-                            <InfoBlock
-                                label="Battery"
-                                icon={getBatteryIcon()}
-                                value={valueOrEmpty(truck.battery[0].charge_level)}
-                                colour={COLOURS[2]}
-                            />
+                                {/*Speed*/}
+                                <InfoBlock
+                                    label="Battery"
+                                    loading={this.state.loading}
+                                    icon={getBatteryIcon()}
+                                    value={valueOrEmpty(truck.battery[truck.battery.length - 1].charge_level)}
+                                    colour={COLOURS[2]}
+                                />
 
-                            {/*Status*/}
-                            <InfoBlock
-                                label="Battery Temperature"
-                                icon={<Thermostat />}
-                                colour={COLOURS[2]}
-                                value={valueOrEmpty(truck.battery[0].temp)}
-                            />
+                                {/*Status*/}
+                                <InfoBlock
+                                    label="Battery Temperature"
+                                    loading={this.state.loading}
+                                    icon={<Thermostat />}
+                                    colour={COLOURS[2]}
+                                    value={valueOrEmpty(truck.battery[truck.battery.length - 1].temp)}
+                                />
 
-                        </section>
-                        {(truck.location && truck.location[0].fix) ?
-                            <Map
-                                markers={[
-                                    {
-                                        lat: -37.8243913,
-                                        long: 145.0396567
-                                    },
-                                ]}
-                            />
-                            :
-                            <h5 className="selfCenter">Unable to determine location</h5>
+                            </section>
+                            {(truck.location && truck.location[truck.location.length].fix) ?
+                                <Map
+                                    markers={[
+                                        {
+                                            lat: -37.8243913,
+                                            long: 145.0396567
+                                        },
+                                    ]}
+                                />
+                                :
+                                <h5 className="selfCenter">Unable to determine location</h5>
 
-                        }
+                            }
+                        </article>
                     </article>
                 }
 

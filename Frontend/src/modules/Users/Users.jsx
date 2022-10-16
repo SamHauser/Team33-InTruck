@@ -15,10 +15,23 @@ export default class Users extends Component {
     constructor(props) {
         super(props)
         this.state = {
-            userOpen: false
+            userOpen: false,
+            username: ""
         }
     }
 
+    handleDetailsClose = () => {
+        this.setState({
+            userOpen: false
+        })
+    }
+
+    handleRow = row => {
+        this.setState({
+            userOpen: true,
+            username: row.row.username
+        })
+    }
 
     render() {
         return (
@@ -28,12 +41,18 @@ export default class Users extends Component {
                 />
 
                 {/*User Details*/}
-                <UserCreator />
+                <UserCreator
+                    open={this.state.userOpen}
+                    username={this.state.username}
+                    onClose={this.handleDetailsClose}
+                />
 
                 {/*Users List*/}
                 <PeerTable2
-                    columns={[]}
-                    data={[]}
+                    name="Users"
+                    url="users/getAll"
+                    columns={dataFormat}
+                    onRowClick={this.handleRow}
                 />
 
 
@@ -42,3 +61,21 @@ export default class Users extends Component {
         )
     }
 }
+
+const dataFormat = [
+    {
+        flex: 1,
+        field: "username",
+        headerName: "Username",
+    },
+    {
+        flex: 1,
+        field: "first_name",
+        headerName: "First Name",
+    },
+    {
+        flex: 1,
+        field: "last_name",
+        headerName: "Last Name",
+    },
+]

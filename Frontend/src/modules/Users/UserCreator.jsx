@@ -1,6 +1,9 @@
 /**
  * PROPS
  * -----
+ * open
+ * username
+ * onClose
  */
 
 import { Button, ButtonGroup, Dialog, DialogContent } from "@mui/material"
@@ -50,9 +53,12 @@ export default class UserCreator extends Component {
         })
     }
 
-    handleCreateOpen = () => {
+    handleCreateOpen = (mode) => {
+        if (!mode) { this.props.onClose() }
+
         this.setState({
-            open: !this.state.open
+            open: !this.state.open,
+            mode: mode
         })
     }
 
@@ -113,6 +119,30 @@ export default class UserCreator extends Component {
         apiPostCall(url, "POST", newUser, callback, error)
     }
 
+    GETuser = () => {
+        const url = `users/get/${this.props.username}`
+
+        const callback = d => {
+            d = d[0]
+            this.handleCreateOpen("edit")
+
+            this.setState({
+                user: d
+            })
+        }
+        const error = e => {
+            console.error(e)
+        }
+
+        apiGetCall(url, callback, error)
+    }
+
+    componentDidUpdate(prevProps) {
+        if (prevProps.open !== this.props.open && this.props.open) {
+            this.GETuser()
+        }
+    }
+
 
     render() {
         const { user } = this.state
@@ -124,14 +154,14 @@ export default class UserCreator extends Component {
                     text="Create User"
                     variant="outlined"
                     style={styles.button}
-                    onClick={this.handleCreateOpen}
+                    onClick={() => this.handleCreateOpen("create")}
                 />
 
 
                 {/*Details */}
                 <Dialog
                     open={this.state.open}
-                    onClose={this.handleCreateOpen}
+                    onClose={() => this.handleCreateOpen(false)}
                     fullWidth
 
                 >
@@ -139,6 +169,21 @@ export default class UserCreator extends Component {
                         className="fg"
                     >
                         <article>
+                            {/*Username*/}
+                            <section className="around">
+
+                                <BasicField
+                                    name="username"
+                                    label="Username"
+                                    value={user.username}
+                                    disabled={this.state.mode === "edit"}
+                                    error={this.state.errMsg.includes("Username")}
+                                    onChange={this.handleChange}
+                                />
+
+                                <BasicField type="empty" />
+                            </section>
+                            <br />
                             {/* Name */}
                             <section className="around">
                                 {/* First Name */}
@@ -159,41 +204,28 @@ export default class UserCreator extends Component {
                                 />
                             </section>
                             <br />
-                            {/*Username*/}
-                            <section className="around">
 
-                                <BasicField
-                                    name="username"
-                                    label="Username"
-                                    value={user.username}
-                                    error={this.state.errMsg.includes("Username")}
-                                    onChange={this.handleChange}
-                                />
-
-                                <BasicField type="empty" />
-                            </section>
-                            <br />
-                            <br />
-                            <br />
                             {/*Password*/}
-                            <section className="around">
+                            {this.state.mode === "create" &&
+                                < section className="around">
 
-                                <BasicField
-                                    name="password"
-                                    label="Password"
-                                    value={user.password}
-                                    error={this.state.errMsg.includes("Password")}
-                                    onChange={this.handleChange}
-                                />
-                                {/*Confirmation Password*/}
-                                <BasicField
-                                    name="confPassword"
-                                    label="Confirm Password"
-                                    value={user.confPassword}
-                                    error={this.state.errMsg.includes("Password")}
-                                    onChange={this.handleChange}
-                                />
-                            </section>
+                                    <BasicField
+                                        name="password"
+                                        label="Password"
+                                        value={user.password}
+                                        error={this.state.errMsg.includes("Password")}
+                                        onChange={this.handleChange}
+                                    />
+                                    {/*Confirmation Password*/}
+                                    <BasicField
+                                        name="confPassword"
+                                        label="Confirm Password"
+                                        value={user.confPassword}
+                                        error={this.state.errMsg.includes("Password")}
+                                        onChange={this.handleChange}
+                                    />
+                                </section>
+                            }
 
                             <br />
                             {/*Error Msg*/}
@@ -214,7 +246,7 @@ export default class UserCreator extends Component {
                         </article>
                     </DialogContent>
                 </Dialog>
-            </article>
+            </article >
 
         )
     }

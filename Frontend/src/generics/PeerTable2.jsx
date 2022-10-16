@@ -67,7 +67,7 @@ export default class PeerTable2 extends Component {
             console.error(e)
         }
 
-        apiGetCall(url, callback, error)
+        apiGetCall(url, callback, error, true)
     }
 
     componentDidMount() {
@@ -92,9 +92,12 @@ export default class PeerTable2 extends Component {
 
         return (
             <DataGrid
+                data-testid={`table-${this.props.name}`}
                 autoHeight
                 rows={this.state.data}
                 pageSize={!this.props.pageSize ? 10 : ""}
+                className="fg"
+                style={{ color: "white" }}
                 {...this.props}
             />
         );
