@@ -5,7 +5,7 @@
 
 ## Our Team
 
-- Claudia 🍥
+- Claudia :bowtie:
 - Eamonn 🦎
 - Harrison ◻️
 - Nathaniel ◻️
