@@ -15,23 +15,23 @@
 
 
 .bg {
-    background-color: #171820;
-    color: #77797d;
+    background-color: #1A1D23;
+    color: #D7DAE0;
 }
 
 .fg {
-    background-color: #33343c;
-    color: #77797d;
+    background-color: #2C303A;
+    color: #D7DAE0;
 }
 
 
 .pc {
-    background-color: #dc5656;
+    background-color: #FB4B4E;
     color: #33343c;
 }
 
 .hoverable:hover {
-    color: #cccbcf;
+    color: #fff;
 }
 
 .hoverable {
@@ -39,17 +39,18 @@
 }
 
 .selected {
-    background-color: #dc5656;
-    color: #33343c;
+    background-color: #FB4B4E;
+    color: #fff;
 }
 
 .glow {
-    box-shadow: 0 0 10px 1px #dc5656;
+    box-shadow: 0 0 10px 1px #FB4B4E;
 }
 
 .module {
     border-radius: 12px;
     margin: 0 30px 30px 0;
+    box-shadow: rgba(0, 0, 0, 0.2) 0px 8px 24px;
 }
 
 
