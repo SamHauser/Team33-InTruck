@@ -5,7 +5,12 @@
 */
 
 import React, { Component } from 'react';
+import ReactDOM from 'react-dom/client';
 import mapboxgl from 'mapbox-gl';
+import { LocalShipping } from '@mui/icons-material';
+import { COLOURS } from '../config';
+import { Tooltip } from '@mui/material';
+import { arrMatch } from '../generics/GeneralFunctions';
 
 // Set your mapbox access token here
 mapboxgl.accessToken = 'pk.eyJ1Ijoicm9zc2luZ3RvbjU1IiwiYSI6ImNsMzF0ZG9jZTIyam4zaXAyaGZjNWhkZGMifQ.sHPj8kR1E4e_cCc6TCCEqg';
@@ -86,18 +91,33 @@ export default class Map extends Component {
         const map = new mapboxgl.Map({
             container: this.mapContainer.current,
             style: 'mapbox://styles/rossington55/cl31so9i2000014mvrbi6s0oc',
-            center: [long, lat],
-            zoom: zoom
+            bounds: bounds,
+            boxZoom: false,
         });
         map.fitBounds(bounds)
 
         //Set marker styles
-        const el = document.createElement('div');
-
+        const style = {
+            color: COLOURS[2]
+        }
+        const textStyle = {
+            color: COLOURS[5]
+        }
 
         //Add markers to map
         for (let mark of markers) {
-            const marker = new mapboxgl.Marker()
+            //Boilerplate
+            const el = document.createElement('div');
+            const root = ReactDOM.createRoot(el)
+
+            //Marker element
+            const markerEl =
+                <Tooltip title={mark.name}>
+                    <LocalShipping style={style} />
+                </Tooltip>
+            root.render(markerEl)
+
+            const marker = new mapboxgl.Marker(el)
                 .setLngLat([mark.long, mark.lat])
                 .addTo(map);
         }
@@ -108,7 +128,7 @@ export default class Map extends Component {
     }
 
     componentDidUpdate(prevProps) {
-        if (prevProps.markers !== this.props.markers) {
+        if (!arrMatch(prevProps.markers, this.props.markers)) {
             this.setMarkers()
         }
     }

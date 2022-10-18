@@ -62,8 +62,25 @@ export default class DeviceDetails extends Component {
         this.POSTconfig()
     }
 
+    getSubValue = (category, prop) => {
+        const { truck } = this.state
+
+        //If category doesnt exist
+        if (isEmpty(truck[category]) || isEmpty(truck)) {
+            return valueOrEmpty("")
+        }
+
+        const row = truck[category][truck[category].length - 1]
+        return valueOrEmpty(row[prop])
+    }
+
     GETdeviceDetails = () => {
-        const url = `device/getDeviceData/${this.props.deviceName}`
+        const secondsBefore = 10
+        // const from = new Date().getTime() - secondsBefore * 1000
+        // const to = new Date().getTime()
+        const from = 1663336800000
+        const to = 1663423200000
+        const url = `device/getDeviceDataRange/${this.props.deviceName}, ${from}, ${to}`
         const keys = ["network", "battery", "environment", "timestamp", "device_name", "alert"]
         const callback = data => {
             let truck = {}
@@ -92,7 +109,7 @@ export default class DeviceDetails extends Component {
         }
 
         this.setState({
-            loading: true
+            loading: true,
         })
         apiGetCall(url, callback, error, true)
 
@@ -143,7 +160,12 @@ export default class DeviceDetails extends Component {
         let { truck, config } = this.state
         if (!truck || !truck.device_name) { truck = null }
         const getBatteryIcon = () => {
-            const battery = truck.battery[truck.battery.length - 1]
+            let battery = truck ? truck.battery : null
+            if (isEmpty(battery)) {
+                return <BatteryUnknown />
+            }
+            battery = battery[battery.length - 1]
+
             //Unknown
             if (isEmpty(battery.charge_level)) {
                 return <BatteryUnknown />
@@ -202,10 +224,66 @@ export default class DeviceDetails extends Component {
 
 
                 {/*Details*/}
-                {truck === null ?
+                {this.props.deviceName === "" ?
                     <h5>No Truck selected</h5> :
 
                     <article>
+
+                        {/*Device Info*/}
+                        <article>
+                            <section className="wrap around">
+
+                                {/*Current Temp */}
+                                <InfoBlock
+                                    label="Temperature"
+                                    loading={this.state.loading}
+                                    icon={<Thermostat />}
+                                    value={this.getSubValue("environment", "temperature")}
+                                />
+
+                                {/*Humidity*/}
+                                <InfoBlock
+                                    label="Humidity"
+                                    loading={this.state.loading}
+                                    icon={<Water />}
+                                    value={this.getSubValue("environment", "humidity")}
+                                    colour={COLOURS[4]}
+                                />
+
+                                {/*Speed*/}
+                                <InfoBlock
+                                    label="Battery"
+                                    loading={this.state.loading}
+                                    icon={getBatteryIcon()}
+                                    value={this.getSubValue("battery", "charge_level")}
+                                    colour={COLOURS[2]}
+                                />
+
+                                {/*Status*/}
+                                <InfoBlock
+                                    label="Battery Temperature"
+                                    loading={this.state.loading}
+                                    icon={<Thermostat />}
+                                    colour={COLOURS[2]}
+                                    value={this.getSubValue("battery", "temp")}
+                                />
+
+                            </section>
+                            {this.getSubValue("location", "fix") !== "No data" ?
+                                <Map
+                                    markers={[
+                                        {
+                                            lat: -37.8243913,
+                                            long: 145.0396567
+                                        },
+                                    ]}
+                                />
+                                :
+                                <h5 className="selfCenter">Unable to determine location</h5>
+
+                            }
+                        </article>
+
                         {/* Configuration */}
                         {config.device_name &&
                             <article style={styles.configContainer}>
@@ -277,61 +355,6 @@ export default class DeviceDetails extends Component {
 
                             </article>
                         }
-
-                        {/*Device Info*/}
-                        <article>
-                            <section className="wrap around">
-
-                                {/*Current Temp */}
-                                <InfoBlock
-                                    label="Temperature"
-                                    loading={this.state.loading}
-                                    icon={<Thermostat />}
-                                    value={valueOrEmpty(truck.environment[truck.environment.length - 1].temperature)}
-                                />
-
-                                {/*Humidity*/}
-                                <InfoBlock
-                                    label="Humidity"
-                                    loading={this.state.loading}
-                                    icon={<Water />}
-                                    value={valueOrEmpty(truck.environment[truck.environment.length - 1].humidity)}
-                                    colour={COLOURS[4]}
-                                />
-
-                                {/*Speed*/}
-                                <InfoBlock
-                                    label="Battery"
-                                    loading={this.state.loading}
-                                    icon={getBatteryIcon()}
-                                    value={valueOrEmpty(truck.battery[truck.battery.length - 1].charge_level)}
-                                    colour={COLOURS[2]}
-                                />
-
-                                {/*Status*/}
-                                <InfoBlock
-                                    label="Battery Temperature"
-                                    loading={this.state.loading}
-                                    icon={<Thermostat />}
-                                    colour={COLOURS[2]}
-                                    value={valueOrEmpty(truck.battery[truck.battery.length - 1].temp)}
-                                />
-
-                            </section>
-                            {(truck.location && truck.location[truck.location.length].fix) ?
-                                <Map
-                                    markers={[
-                                        {
-                                            lat: -37.8243913,
-                                            long: 145.0396567
-                                        },
-                                    ]}
-                                />
-                                :
-                                <h5 className="selfCenter">Unable to determine location</h5>
-
-                            }
-                        </article>
                     </article>
                 }
 

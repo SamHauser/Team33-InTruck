@@ -89,6 +89,7 @@ export default class Dashboard extends Component {
             for (let row of d.rows) {
                 if (!row.location || !row.location.fix) { continue }
                 markers.push({
+                    name: row.device_name,
                     lat: row.location.lat,
                     long: row.location.lon
                 })
@@ -116,7 +117,14 @@ export default class Dashboard extends Component {
 
     }
     componentDidMount() {
+        //First time
         this.GETlatestData()
+
+        //Refresh rate in seconds
+        const refreshRate = 2
+        setInterval(() => {
+            this.GETlatestData()
+        }, refreshRate * 1000);
     }
 
     render() {

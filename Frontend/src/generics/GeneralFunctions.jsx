@@ -821,6 +821,12 @@ function valueOrEmpty(value) {
     return value
 }
 
+function arrMatch(a, b) {
+    a = JSON.stringify(a)
+    b = JSON.stringify(b)
+
+    return a === b
+}
 
 
 export {
@@ -864,4 +870,5 @@ export {
     valueOrEmpty,
     checkRoleAuth,
     getLongLat,
+    arrMatch,
 };
