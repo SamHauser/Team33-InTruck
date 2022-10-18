@@ -131,15 +131,12 @@ export default class Dashboard extends Component {
         return (<article className="full">
             <Title label="Dashboard" />
 
-            {/*Alerts*/}
-            <section className="wrap">
-                <Module width={6}>
-                    <Alerts latestData={this.state.latestData.rows} />
-                </Module>
-            </section>
-
             {/*Stats*/}
             <section className="wrap">
+                <Module width={2}>
+                    <Alerts latestData={this.state.latestData.rows} />
+                </Module>
+
                 {/*Trucks*/}
                 <InfoBlock
                     colour={COLOURS[2]}
@@ -159,13 +156,14 @@ export default class Dashboard extends Component {
 
             {/*Map*/}
             <section className="wrap">
-                <Module width={6} height={2}>
+                <Module width={6} height={3}>
                     <Map
                         markers={this.state.latestData.markers}
 
                     />
                 </Module>
             </section>
+
         </article >)
     }
 }

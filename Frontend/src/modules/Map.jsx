@@ -46,7 +46,7 @@ export default class Map extends Component {
         super(props);
         this.state = {
             zoom: 10,
-            height: 358,
+            height: 537,
             width: 1120,
         };
         this.mapContainer = React.createRef();
