@@ -53,7 +53,7 @@ class Device:
             self._luminance.set_measurement_time_ms(2560)
         except (RuntimeError, OSError) as err:
             self._luminance = None
-            log.warning(f"unable to connect to luminance sensor: {err}")
+            log.warning(f"Unable to connect to luminance sensor: {err}")
         
         self._start_cellular()
         self._enable_gps()
@@ -63,21 +63,29 @@ class Device:
 
     def _start_cellular(self):
         '''Starts the ECM connection. Must be done for internet after a reboot.'''
-        self._atsender.runCommand("AT#ECM=1,0")
-        response = self._atsender.runCommand("AT#ECM?")
-        if response == "#ECM: 0,1":
-            log.info("Cellular connection enabled")
-        else:
-            log.warning(f"Error enabling cellular connection: {response}")
+        for _ in range(3):
+            log.info("Enabling cellular connection...")
+            self._atsender.runCommand("AT#ECM=1,0")
+            response = self._atsender.runCommand("AT#ECM?")
+            if response == "#ECM: 0,1":
+                log.info("Cellular connection enabled")
+                break
+            else:
+                log.warning(f"Error enabling cellular connection: {response}")
+                time.sleep(5)
 
     def _enable_gps(self):
         '''Starts the GPS session'''
-        self._atsender.runCommand("AT$GPSP=1")
-        response = self._atsender.runCommand("AT$GPSP?")
-        if response == "$GPSP: 1":
-            log.info("GPS Enabled")
-        else:
-            log.warning(f"Error enabling GPS hardware: {response}")
+        for _ in range(3):
+            log.info("Enabling GPS...")
+            self._atsender.runCommand("AT$GPSP=1")
+            response = self._atsender.runCommand("AT$GPSP?")
+            if response == "$GPSP: 1":
+                log.info("GPS Enabled")
+                break
+            else:
+                log.warning(f"Error enabling GPS hardware: {response}")
+                time.sleep(5)
     
     def set_led(self, r: int, g: int, b: int):
         '''Set the PiJuice LED colour via RGB (0-255)'''
