@@ -26,21 +26,6 @@ const styles = {
     }
 }
 
-const markers = [
-    {
-        lat: -37.8243913,
-        long: 145.0396567
-    },
-    {
-        lat: -37.823524,
-        long: 145.043003
-    },
-    {
-        lat: -37.820710,
-        long: 145.045451
-    }
-]
-
 export default class Map extends Component {
     constructor(props) {
         super(props);
@@ -50,6 +35,12 @@ export default class Map extends Component {
             width: 1120,
         };
         this.mapContainer = React.createRef();
+    }
+
+    handleMarkerClick = deviceName => {
+        sessionStorage.setItem("lastPage", JSON.stringify("Tracking"))
+        sessionStorage.setItem("lastDevice", deviceName)
+        window.location.reload()
     }
 
     setMarkers = () => {
@@ -112,8 +103,13 @@ export default class Map extends Component {
 
             //Marker element
             const markerEl =
-                <Tooltip title={mark.name}>
-                    <LocalShipping style={style} />
+                <Tooltip
+                    title={mark.name}
+                >
+                    <LocalShipping
+                        style={style}
+                        onClick={() => this.handleMarkerClick(mark.name)}
+                    />
                 </Tooltip>
             root.render(markerEl)
 

@@ -4,7 +4,7 @@ const COLOURS = [
     "#dc5656",//2 Primary (call to action)
     "#645487",//3 Secondary
     "#2F71BF",//4 Tertiary
-    "#77797d",//5 Primary Text
+    "#D7DAE0",//5 Primary Text
 ]
 
 const FIELD_WIDTH = 180

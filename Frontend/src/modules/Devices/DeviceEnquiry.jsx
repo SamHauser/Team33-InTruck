@@ -25,6 +25,16 @@ export default class DeviceEnquiry extends Component {
         })
     }
 
+    componentDidMount() {
+        const lastDevice = sessionStorage.getItem("lastDevice")
+        if (lastDevice) {
+            this.setState({
+                selectedDevice: lastDevice
+            })
+            sessionStorage.removeItem("lastDevice")
+        }
+    }
+
 
     render() {
 
@@ -32,7 +42,10 @@ export default class DeviceEnquiry extends Component {
             <section>
                 {/*Selection*/}
                 <Module>
-                    <DeviceSelection onClick={this.handleDeviceSelect} />
+                    <DeviceSelection
+                        onClick={this.handleDeviceSelect}
+                        selectedDevice={this.state.selectedDevice}
+                    />
                 </Module>
 
 

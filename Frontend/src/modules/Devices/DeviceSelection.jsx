@@ -1,6 +1,8 @@
 /**
  * PROPS
  * -----
+ * selectedDevice
+ * onClick(device)
  */
 
 import { List, ListItemButton, ListItemText } from "@mui/material"
@@ -47,6 +49,7 @@ export default class DeviceSelection extends Component {
 
     render() {
         const { devices } = this.state
+
         return (
             <article>
                 <h2 style={styles.selectionHeader}>Device Selection</h2>
@@ -59,6 +62,7 @@ export default class DeviceSelection extends Component {
                     {devices.map((device, i) => (
                         <ListItemButton
                             key={i}
+                            className={this.props.selectedDevice === device ? "selected glow" : ""}
                             onClick={() => this.handleClick(device)}
                         >
                             <ListItemText primary={device} />

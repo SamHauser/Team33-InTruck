@@ -87,7 +87,7 @@ export default class Dashboard extends Component {
             //Set marker locations
             let markers = []
             for (let row of d.rows) {
-                if (!row.location || !row.location.fix) { continue }
+                if (!row.location || !row.location.lat) { continue }
                 markers.push({
                     name: row.device_name,
                     lat: row.location.lat,
@@ -122,9 +122,13 @@ export default class Dashboard extends Component {
 
         //Refresh rate in seconds
         const refreshRate = 2
-        setInterval(() => {
-            this.GETlatestData()
+        this.reloader = setInterval(() => {
+            // this.GETlatestData()
         }, refreshRate * 1000);
+    }
+
+    componentWillUnmount() {
+        clearInterval(this.reloader)
     }
 
     render() {

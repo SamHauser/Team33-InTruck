@@ -19,10 +19,12 @@
     "deck.gl": "^8.7.8",
     "mapbox-gl": "^2.8.2",
     "moment": "2.29.4",
+    "moment-timezone": "^0.5.38",
     "react": "^18.0.0",
     "react-dom": "^18.0.0",
     "react-map-gl": "^7.0.11",
-    "recharts": "^2.1.9"
+    "recharts": "^2.1.9",
+    "save": "^2.9.0"
   },
   "devDependencies": {
     "@testing-library/react": "^13.4.0",

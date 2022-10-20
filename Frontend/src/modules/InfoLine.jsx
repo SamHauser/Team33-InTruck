@@ -4,26 +4,30 @@
  * label
  * size - in info block units
  * icon
+ * dataKey
  * data
  */
 import React, { Component } from "react"
+import { ResponsiveContainer, YAxis, XAxis, AreaChart, Area, Tooltip } from 'recharts'
 import { COLOURS } from "../config"
-import { ResponsiveContainer, YAxis, AreaChart, Area } from 'recharts'
 
 const styles = {
+    container: {
+        width: 450,
+        height: 200
+    },
     labelContainer: {
         padding: 10,
         borderRadius: "12px 0 0 12px",
-        maxWidth: 65,
-        width: 65,
-        marginRight: 5
+        width: 150,
+        marginRight: 5,
     },
     icon: {
-        color: COLOURS[1]
+        color: COLOURS[5]
     },
     label: {
         marginBottom: 0,
-        color: COLOURS[1]
+        color: COLOURS[5]
     },
     value: {
         color: "white"
@@ -33,13 +37,28 @@ const styles = {
 export default class InfoLine extends Component {
 
     render() {
+        const domain = () => {
+            let min = Infinity
+            let max = -Infinity
+            for (let i of this.props.data) {
+                const val = Number(i[this.props.y])
+                if (val < min) {
+                    min = val
+                }
+                if (val > max) {
+                    max = val
+                }
+            }
+
+            const domain = [Number(min), Number(max)]
+            return domain
+
+        }
 
         return (
             <section
-                className="full"
-                style={{
-                    ...styles.container,
-                }}
+                className="full module"
+                style={styles.container}
             >
                 <article
                     className="center itemsCenter"
@@ -66,20 +85,17 @@ export default class InfoLine extends Component {
                     <ResponsiveContainer width={"100%"} height={"100%"}>
                         <AreaChart
                             data={this.props.data}
+                            margin={{ top: 20, right: 20, bottom: 20, left: 20 }}
                         >
-                            <defs>
-                                <linearGradient id={`colour${this.props.label}`} x1="0" y1="0" x2="0" y2="1">
-                                    <stop offset="5%" stopColor={this.props.colour} stopOpacity="0.8" />
-                                    <stop offset="95%" stopColor={COLOURS[1]} stopOpacity="0.8" />
-                                </linearGradient>
-                            </defs>
-                            <YAxis dataKey="earnings" />
+                            <YAxis dataKey={this.props.y} domain={domain()} />
+                            <XAxis dataKey={this.props.x} />
+                            <Tooltip />
                             <Area
                                 type="monotone"
-                                dataKey="earnings"
+                                dataKey={this.props.y}
                                 stroke={this.props.colour}
                                 fillOpacity={1}
-                                fill={`url(#colour${this.props.label})`}
+                                fill={`url(#colour${this.props.x})`}
                             />
                         </AreaChart>
                     </ResponsiveContainer>
