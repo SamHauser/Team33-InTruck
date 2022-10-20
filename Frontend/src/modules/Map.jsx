@@ -56,27 +56,33 @@ export default class Map extends Component {
         }
 
         //Get average latitudes and longitudes
-        let minLat = Infinity, maxLat = -Infinity
-        let minLong = Infinity, maxLong = -Infinity
+        let minLat = 90, maxLat = -90
+        let minLon = 180, maxLon = -180
         for (let mark of markers) {
-
+            console.table("mark", mark)
             lats.push(mark.lat)
-            longs.push(mark.long)
+            longs.push(mark.lon)
 
             if (mark.lat < minLat) { minLat = mark.lat }
             if (mark.lat > maxLat) { maxLat = mark.lat }
 
-            if (mark.long < minLong) { minLong = mark.long }
-            if (mark.long > maxLong) { maxLong = mark.long }
+            if (mark.lon < minLon) { minLon = mark.lon }
+            if (mark.lon > maxLon) { maxLon = mark.lon }
         }
-        const lat = lats.reduce((a, b) => a + b) / lats.length
-        const long = longs.reduce((a, b) => a + b) / longs.length
+
+        if (minLat === 90 && minLon === 90) {
+            minLat = -90
+            maxLat = 90
+            minLon = -180
+            maxLon = 180
+        }
 
         //Set boundaries just outside furthest pins
         const bounds = this.props.markers ? [
-            [minLong - 0.011, minLat - 0.011],
-            [maxLong + 0.011, maxLat + 0.011]
-        ] : [[-90, -90], [90, 90]]
+            [minLon, minLat - 0.011],
+            [maxLon + 0.011, maxLat + 0.011]
+        ] : [[-180, -90], [180, 90]]
+        console.table(bounds)
 
 
         const map = new mapboxgl.Map({
@@ -85,6 +91,7 @@ export default class Map extends Component {
             bounds: bounds,
             boxZoom: false,
         });
+        if (!this.props.markers) { return }
         map.fitBounds(bounds)
 
         //Set marker styles
@@ -97,6 +104,8 @@ export default class Map extends Component {
 
         //Add markers to map
         for (let mark of markers) {
+            if (mark.lon === "No data" && mark.lat === "No data") { continue }
+
             //Boilerplate
             const el = document.createElement('div');
             const root = ReactDOM.createRoot(el)
@@ -114,7 +123,7 @@ export default class Map extends Component {
             root.render(markerEl)
 
             const marker = new mapboxgl.Marker(el)
-                .setLngLat([mark.long, mark.lat])
+                .setLngLat([mark.lon, mark.lat])
                 .addTo(map);
         }
 

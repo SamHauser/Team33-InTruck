@@ -5,7 +5,7 @@
 
 import { Button, Card, CardActions, CardContent, CardMedia, Typography } from "@mui/material"
 import { Component } from "react"
-import { COLOURS } from "./config"
+import { COLOURS, ENV } from "./config"
 import Input from "./fields/Input"
 import { apiLoginCall, apiTokenCall } from "./generics/APIFunctions"
 
@@ -150,14 +150,16 @@ export default class Login extends Component {
                     </CardActions>
 
                     {/*Dev Button */}
-                    <CardActions className="center">
-                        <Button
-                            size="large"
-                            onClick={() => this.handleLogin(true)}
-                        >
-                            DEV LOGIN
-                        </Button>
-                    </CardActions>
+                    {ENV === "TEST" &&
+                        <CardActions className="center">
+                            <Button
+                                size="large"
+                                onClick={() => this.handleLogin(true)}
+                            >
+                                DEV LOGIN
+                            </Button>
+                        </CardActions>
+                    }
                 </Card>
             </article>
 

@@ -91,7 +91,7 @@ export default class Dashboard extends Component {
                 markers.push({
                     name: row.device_name,
                     lat: row.location.lat,
-                    long: row.location.lon
+                    lon: row.location.lon
                 })
             }
             d.markers = markers
@@ -123,7 +123,7 @@ export default class Dashboard extends Component {
         //Refresh rate in seconds
         const refreshRate = 2
         this.reloader = setInterval(() => {
-            // this.GETlatestData()
+            this.GETlatestData()
         }, refreshRate * 1000);
     }
 

@@ -5,6 +5,7 @@
  * icon
  * value
  * colour
+ * bauble
  * isUnit - is this module the basis for all unit calculations
  */
 import { CircularProgress } from "@mui/material"

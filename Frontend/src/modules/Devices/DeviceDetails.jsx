@@ -58,13 +58,12 @@ export default class DeviceDetails extends Component {
         return truck[category]
     }
 
-    getSubValue = (category, prop) => {
+    getSubValue = (category, prop, bauble) => {
         const { truck } = this.state
 
         //If category doesnt exist
         if (isEmpty(truck[category]) || isEmpty(truck)) {
-
-            return valueOrEmpty("")
+            return valueOrEmpty("", bauble)
         }
 
         //Get the latest row
@@ -77,15 +76,16 @@ export default class DeviceDetails extends Component {
             }
         }
 
-        return valueOrEmpty(row[prop])
+        return valueOrEmpty(row[prop], bauble)
     }
 
     GETdeviceDetails = () => {
         const secondsBefore = 10
+        // const from = 1666162038
         const from = (new Date().getTime() / 1000) - secondsBefore * 1000
         const to = new Date().getTime() / 1000
         const url = `device/getDeviceDataRange/${this.props.deviceName}, ${from}, ${to}`
-        const keys = ["network", "battery", "environment", "timestamp", "device_name", "alert"]
+        const keys = ["network", "battery", "environment", "timestamp", "device_name", "location", "alert"]
         const callback = data => {
             let truck = {}
             //Convert each row of data into an array of entries
@@ -139,7 +139,7 @@ export default class DeviceDetails extends Component {
     }
 
     render() {
-        let { truck, config } = this.state
+        let { truck } = this.state
         if (!truck || !truck.device_name) { truck = null }
         const getBatteryIcon = () => {
             let battery = truck ? truck.battery : null
@@ -242,7 +242,7 @@ export default class DeviceDetails extends Component {
                                     label="Temperature"
                                     loading={this.state.loading}
                                     icon={<Thermostat />}
-                                    value={this.getSubValue("environment", "temperature")}
+                                    value={this.getSubValue("environment", "temperature", "°C")}
                                 />
 
                                 {/*Humidity*/}
@@ -250,16 +250,16 @@ export default class DeviceDetails extends Component {
                                     label="Humidity"
                                     loading={this.state.loading}
                                     icon={<Water />}
-                                    value={this.getSubValue("environment", "humidity")}
+                                    value={this.getSubValue("environment", "humidity", "%")}
                                     colour={COLOURS[4]}
                                 />
 
-                                {/*Speed*/}
+                                {/*Battery*/}
                                 <InfoBlock
                                     label="Battery"
                                     loading={this.state.loading}
                                     icon={getBatteryIcon()}
-                                    value={this.getSubValue("battery", "charge_level")}
+                                    value={this.getSubValue("battery", "charge_level", "%")}
                                     colour={COLOURS[2]}
                                 />
 
@@ -297,19 +297,12 @@ export default class DeviceDetails extends Component {
 
 
                             </section>
-                            {this.getSubValue("location", "fix") !== "No data" ?
-                                <Map
-                                    markers={[
-                                        {
-                                            lat: -37.8243913,
-                                            long: 145.0396567
-                                        },
-                                    ]}
-                                />
-                                :
-                                <h5 className="selfCenter">Unable to determine location</h5>
-
-                            }
+                            <Map
+                                markers={[{
+                                    lat: this.getSubValue("location", "lat"),
+                                    lon: this.getSubValue("location", "lon"),
+                                }]}
+                            />
                         </article>
 
                         {/*Config*/}
