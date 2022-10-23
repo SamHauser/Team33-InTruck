@@ -2,6 +2,7 @@
 
 //import API URL
 import { isEmpty } from './GeneralFunctions';
+import fetch from 'node-fetch'
 
 //Remove when not testing
 //import fetch from 'node-fetch'

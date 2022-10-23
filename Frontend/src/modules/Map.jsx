@@ -32,7 +32,7 @@ export default class Map extends Component {
         this.state = {
             zoom: 10,
             height: 300,
-            width: 800,
+            width: 880,
         };
         this.mapContainer = React.createRef();
     }
@@ -142,18 +142,21 @@ export default class Map extends Component {
     render() {
 
         return (
-            <article style={
-                {
+            <article
+                className='center itemsCenter selfCenter'
+                style={
+                    {
 
-                    ...styles.container,
-                    ...{
+                        ...styles.container,
+                        ...{
 
-                        height: this.state.height,
-                        width: this.state.width
+                            height: this.state.height,
+                            width: this.state.width
+                        }
                     }
-                }
-            }>
+                }>
                 <div
+                    className='selfCenter'
                     ref={this.mapContainer}
                     style={styles.map}
                 />

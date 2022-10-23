@@ -150,7 +150,7 @@ export default class Login extends Component {
                     </CardActions>
 
                     {/*Dev Button */}
-                    {ENV === "TEST" &&
+                    {ENV === "DEV" &&
                         <CardActions className="center">
                             <Button
                                 size="large"
