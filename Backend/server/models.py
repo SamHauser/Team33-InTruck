@@ -16,7 +16,7 @@ class DeviceSchema(BaseModel):
     class Config:
         schema_extra = {
             "example": {
-                "device_name": "In-Truck2",
+                "device_name": "InTruck2",
                 "vehicle_rego": "FTR065",
                 "max_temp": 30,
                 "min_temp": 4,
@@ -36,8 +36,8 @@ class UpdateDevice(BaseModel):
     class Config:
         schema_extra = {
             "example": {
-                "device_name": "In-Truck2",
-                "vehicle_rego": "FTR065",
+                "device_name": "InTruck2",
+                "vehicle_rego": "FTR050",
                 "max_temp": 28,
                 "min_temp": 3,
                 "max_hum": 70,
@@ -55,9 +55,9 @@ class UserSchema(BaseModel):
     class Config:
         schema_extra = {
             "example": {
-                "username": "Admin",
-                "first_name": "Nat",
-                "last_name": "Brennan",
+                "username": "fred.bear",
+                "first_name": "Fred",
+                "last_name": "Bear",
                 "password": "YW1pZ2h0eXBhc3N3b3Jk",
             }
         }
@@ -71,9 +71,9 @@ class UpdateUser(BaseModel):
     class Config:
         schema_extra = {
             "example": {
-                "username": "Admin",
-                "first_name": "Nat",
-                "last_name": "Brennan",
+                "username": "fred.bear",
+                "first_name": "Fred",
+                "last_name": "Bear",
                 "password": "YW5vdGhlcm1pZ2h0eXBhc3N3b3Jk",
             }
         }

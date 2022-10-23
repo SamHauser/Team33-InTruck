@@ -1,17 +1,25 @@
 import motor.motor_asyncio
+import pymongo
+from fastapi import Depends, HTTPException, status
 from bson.objectid import ObjectId
 from bson import SON, json_util
-import datetime, time
+from datetime import datetime, timedelta
+import time
 import json
+from jose import JWTError, jwt
+from server.models import UserSchema
 from hashlib import sha256
 from base64 import b64encode
-from datetime import datetime
 import random
 import pprint
+#from server.userRoutes import oauth2_scheme
+from fastapi.security import OAuth2PasswordBearer
 
 MONGO_DETAILS = "mongodb://localhost:27017"
 client = motor.motor_asyncio.AsyncIOMotorClient(MONGO_DETAILS)
 database = client.InTruck # Primary Database
+
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="users/token")
 
 #   Attempt to make a class for the DB object but FastAPI says NO
 # class db(database, collection):
@@ -20,7 +28,7 @@ database = client.InTruck # Primary Database
 #     self.database = self.client.database
 #     self.collection = self.database.get_collection(collection)
 
-################### Client Config Section ######################
+################### Device Config Section ######################
 
 deviceConfig = database.get_collection("deviceConfig")
 
@@ -37,17 +45,13 @@ def DeviceConfigHelper(config) -> dict:
         "last_update": config["last_update"],
     }
 
-# Retrieve all config docs present in the database (currently not linked)
-async def retrieveConfigs():
-    userConfigs = []
-    async for client in ClientCollection.find():
-        deviceConfig.append(DeviceConfigHelper(client))
-    return userConfigs
-
 # Retrieve a users current config
 async def retrieveConfig(device_name: str):
     config = await deviceConfig.find_one({"device_name": device_name})
-    return DeviceConfigHelper(config)
+    if config:
+        return DeviceConfigHelper(config)
+    else:
+        return "Configuration could not be found"
 
 # Update or Create a deviceConfig matches device_name as one device can have only one config.
 async def updateConfig(data: dict):
@@ -56,14 +60,15 @@ async def updateConfig(data: dict):
         return False
     data['last_update'] = time.time()
     config = await deviceConfig.find_one({'device_name': data['device_name']})
-    print('found document: %s' % pprint.pformat(config))
     if config:
+        print("Config was found, updating now")
         _id = config['_id']
         updated_config = await deviceConfig.replace_one({'_id': ObjectId(_id)},  data )
         if updated_config:
             return "Update Successful"
         return "Update Failed"
     else:
+        print("Config was NOT found, creating now")
         add_config = await deviceConfig.insert_one(data)
         if add_config:
             return "Added Successful"
@@ -74,7 +79,9 @@ DeviceCollection = database.get_collection("DeviceData")
 
 async def retrieveDevicesNames():
     response = await database.command(SON([('distinct', 'DeviceData'), ('key', "device_name")]))
+    print(response)
     doc = json.dumps(response, default=json_util.default)
+    print(doc)
     return doc
 
 async def retrieveDeviceData(device_name: str):
@@ -85,20 +92,115 @@ async def retrieveDeviceData(device_name: str):
         deviceData.append(doc)
     return deviceData
 
+
+async def retrieveLatestEntry():
+    deviceData = []
+    # Get all available device names
+    response = await database.command(SON([('distinct', 'DeviceData'), ('key', "device_name")]))
+    for data in response["values"]:
+        cursor = DeviceCollection.find({'device_name': data}).sort('timestamp', pymongo.DESCENDING)
+        for document in await cursor.to_list(length=1):
+            doc = json.dumps(document, default=json_util.default)
+            deviceData.append(doc)
+    return deviceData
+
 async def retrieveDeviceDataLast24(device_name: str):
     #device = DeviceCollection.find({'device_name': device_name}).sort("timestamp")
     #my_time = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(1347517370))
-    now = datetime.datetime.now()
-    minus24 = now - datetime.timedelta(days=10)
+    now = datetime.now()
+    minus24 = now - timedelta(hours=25)
     deviceData = []
     async for deviceDoc in DeviceCollection.find({'device_name': {'$eq' : device_name}, 'timestamp': {'$gt' : minus24.timestamp()}}):
         doc = json.dumps(deviceDoc, default=json_util.default)
         deviceData.append(doc)
     return deviceData
 
+async def retrieveDeviceDataRange(device_name: str, timeFrom: float, timeTo: float):
+    deviceData = []
+    async for deviceDoc in DeviceCollection.find({'device_name': device_name, 'timestamp': {'$gt' : timeFrom, '$lt' : timeTo}}):
+        doc = json.dumps(deviceDoc, default=json_util.default)
+        deviceData.append(doc)
+    return deviceData
+    
+# async def retrieveAlertsRange(timeFrom: float, timeTo: float):
+#     deviceData = []
+#     async for deviceDoc in DeviceCollection.find({'alert': {'$exists': True}, 'timestamp': {'$gt' : timeFrom, '$lt' : timeTo}}):
+#         doc = json.dumps(deviceDoc, default=json_util.default)
+#         deviceData.append(doc)
+#     return deviceData
+
 ################### Users Section ######################
 
 userCollection = database.get_collection("Users")
+
+def UserHelper(data) -> dict:
+    return{
+        "id": str(data["_id"]),
+        "username": data["username"],
+        "first_name": data["first_name"],
+        "last_name": data["last_name"],
+        #"password": data["password"],
+    }
+
+
+# Get User from username
+async def getUser(username: str, token: str = Depends(oauth2_scheme)):
+    user = await userCollection.find_one({'username': username})
+    del user["password"]
+    if user:
+        return UserHelper(user)
+    else:
+        return "User was not found"
+
+
+# Get all User
+async def getAllUsers(token: str = Depends(oauth2_scheme)):
+    users = []
+    async for user in userCollection.find():
+        del user["password"]
+        doc = json.dumps(user, default=json_util.default)
+        users.append(doc)
+    return users
+
+# Get Current User 
+async def is_authorised(token: str = Depends(oauth2_scheme)):
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+    try:
+        secret = await database.jwtsecret.find_one()
+        payload = jwt.decode(token, secret["jwtsecret"], algorithms=["HS256"])
+        user = getUser(payload.get("username"))
+    except JWTError:
+        raise credentials_exception
+    if user == "User was not found":
+        return False
+    return True
+
+# Get Current Active user
+# async def get_current_active_user(current_user: UserSchema = Depends(get_current_user)):
+#     if current_user.disabled:
+#         raise HTTPException(status_code=400, detail="Inactive user")
+#     return current_user
+
+# Create a token using username + password hashed with the salt
+async def createToken(user: dict):
+    secret = await database.jwtsecret.find_one()
+    expire = datetime.utcnow() + timedelta(hours=24)
+    userJson = {"username": user["username"], "exp": expire}
+    return jwt.encode(userJson, secret["jwtsecret"])
+
+# Validate Token
+async def validateToken(token: str = Depends(oauth2_scheme)):
+    secret = await database.jwtsecret.find()
+    try:
+        payload = jwt.decode(token, secret["jwtsecret"], algorithms = ["HS256"])
+        return True
+    except:
+        return False
+    return False
 
 # Create a User if username is new.
 async def addUser(data: dict):
@@ -109,13 +211,10 @@ async def addUser(data: dict):
     data['salt'] = salt
     data['last_update'] = time.time()
     user = await userCollection.find_one({'username': data['username']})
-    print('found document: %s' % pprint.pformat(user))
     if user:
         return "Username Exsists"
     else:
         data['password'] = ("%s{%s}" % (data['password'], data['salt'])).encode()
-        print(data['password'])
-        print(data['salt'])
         add_user = await userCollection.insert_one(data)
         if add_user:
             return "Added Successful"
@@ -128,7 +227,6 @@ async def updateUser(data: dict):
         return "Body Missing"
     data['last_update'] = time.time()
     user = await userCollection.find_one({'username': data['username']})
-    print('found document: %s' % pprint.pformat(user))
     if user:
         _id = user['_id']
         data['password'] = ("%s{%s}" % (data['password'], user['salt'])).encode()
