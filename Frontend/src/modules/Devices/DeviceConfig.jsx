@@ -11,6 +11,7 @@ import { COLOURS } from "../../config"
 import BasicField from "../../fields/BasicField"
 import { apiGetCall, apiPostCall } from "../../generics/APIFunctions"
 import { isEmpty, valueOrEmpty } from "../../generics/GeneralFunctions"
+import { Lunchbox } from "../../generics/Lunchbox"
 import InfoBlock from "../InfoBlock"
 import Map from "../Map"
 
@@ -43,6 +44,7 @@ export default class DeviceConfig extends Component {
         this.state = {
             truck: {},
             config: {},
+            openSnacks: [],
             loading: false,
         }
     }
@@ -60,7 +62,14 @@ export default class DeviceConfig extends Component {
         this.POSTconfig()
     }
 
-
+    addSnack = (snackId, msg) => {
+        let { openSnacks } = this.state
+        openSnacks.push(snackId)
+        this.setState({
+            errMsg: msg,
+            openSnacks: openSnacks
+        })
+    }
 
     GETdeviceConfig = () => {
         const url = `config/getConfig/${this.props.deviceName}`
@@ -82,9 +91,10 @@ export default class DeviceConfig extends Component {
         const url = "config"
         const body = JSON.stringify(this.state.config)
         const callback = d => {
-
+            this.addSnack(1)
         }
         const error = e => {
+            this.addSnack(0, e)
             console.error(e)
         }
         apiPostCall(url, "POST", body, callback, error)
@@ -103,6 +113,10 @@ export default class DeviceConfig extends Component {
             {
                 label: `Error ${this.state.errMsg}`,
                 severity: "error"
+            },
+            {
+                label: "config saved",
+                severity: "success"
             }
         ]
 
@@ -175,6 +189,15 @@ export default class DeviceConfig extends Component {
                     </Button>
                 </section>
 
+                <Lunchbox
+                    snacks={snacks}
+                    openSnacks={this.state.openSnacks}
+                    onClose={(id) => {
+                        var openSnacks = this.state.openSnacks;
+                        openSnacks.splice(id, 1);
+                        this.setState({ openSnacks: openSnacks });
+                    }}
+                />
             </article>
 
         )

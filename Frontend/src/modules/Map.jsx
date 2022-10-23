@@ -31,8 +31,8 @@ export default class Map extends Component {
         super(props);
         this.state = {
             zoom: 10,
-            height: 537,
-            width: 1120,
+            height: 300,
+            width: 800,
         };
         this.mapContainer = React.createRef();
     }
@@ -59,7 +59,6 @@ export default class Map extends Component {
         let minLat = 90, maxLat = -90
         let minLon = 180, maxLon = -180
         for (let mark of markers) {
-            console.table("mark", mark)
             lats.push(mark.lat)
             longs.push(mark.lon)
 
@@ -82,7 +81,6 @@ export default class Map extends Component {
             [minLon, minLat - 0.011],
             [maxLon + 0.011, maxLat + 0.011]
         ] : [[-180, -90], [180, 90]]
-        console.table(bounds)
 
 
         const map = new mapboxgl.Map({
