@@ -78,8 +78,8 @@ export default class Map extends Component {
 
         //Set boundaries just outside furthest pins
         const bounds = this.props.markers ? [
-            [minLon, minLat - 0.011],
-            [maxLon + 0.011, maxLat + 0.011]
+            [Number(minLon), Number(minLat) - 0.011],
+            [Number(maxLon) + 0.011, Number(maxLat) + 0.011]
         ] : [[-180, -90], [180, 90]]
 
 

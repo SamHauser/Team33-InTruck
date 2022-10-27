@@ -9,6 +9,6 @@ const COLOURS = [
 
 const FIELD_WIDTH = 180
 
-const ENV = "TEST" // DEV, TEST, LIVE
+const ENV = "LIVE" // DEV, TEST, LIVE
 
 export { COLOURS, FIELD_WIDTH, ENV }
