@@ -188,3 +188,19 @@ Install the MongoDB package for Node-Red
 ```Console
 sudo npm install node-red-node-mongodb
 ```
+Download the flows.json from Github. This needs to be done in the some location as previous steps
+```Console
+wget https://raw.githubusercontent.com/SamHauser/Team33-InTruck/Backend-API/Backend/flows.json
+```
+Setup Node-Red with pm2 so that it runs as a system service
+```Console
+sudo npm install -g pm2
+```
+Start Node-Red with pm2
+```Console
+pm2 start /usr/bin/node-red -- -v
+```
+Make pm2 start using systemd. This creates a command on the console windows that you need to copy, paste and execute
+```Console
+pm2 startup systemd
+```
