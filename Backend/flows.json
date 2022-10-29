@@ -1,0 +1,101 @@
+[
+    {
+        "id": "ac46393906604c49",
+        "type": "tab",
+        "label": "Testing MQTT to MongoDB",
+        "disabled": false,
+        "info": "",
+        "env": []
+    },
+    {
+        "id": "62435a3b3b3d515c",
+        "type": "mqtt in",
+        "z": "ac46393906604c49",
+        "name": "",
+        "topic": "python/mqtt",
+        "qos": "1",
+        "datatype": "auto-detect",
+        "broker": "6106a7f2830da346",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 250,
+        "y": 160,
+        "wires": [
+            [
+                "2b2c8c690ed3914f",
+                "9dd002239c31dabf"
+            ]
+        ]
+    },
+    {
+        "id": "2b2c8c690ed3914f",
+        "type": "debug",
+        "z": "ac46393906604c49",
+        "name": "debug 1",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 720,
+        "y": 160,
+        "wires": []
+    },
+    {
+        "id": "9dd002239c31dabf",
+        "type": "mongodb out",
+        "z": "ac46393906604c49",
+        "mongodb": "c93ddcfe83e9ae6c",
+        "name": "",
+        "collection": "DeviceData",
+        "payonly": true,
+        "upsert": false,
+        "multi": false,
+        "operation": "insert",
+        "x": 570,
+        "y": 260,
+        "wires": []
+    },
+    {
+        "id": "6106a7f2830da346",
+        "type": "mqtt-broker",
+        "name": "",
+        "broker": "localhost",
+        "port": "1883",
+        "clientid": "",
+        "autoConnect": true,
+        "usetls": false,
+        "protocolVersion": "5",
+        "keepalive": "60",
+        "cleansession": true,
+        "birthTopic": "",
+        "birthQos": "0",
+        "birthPayload": "",
+        "birthMsg": {},
+        "closeTopic": "",
+        "closeQos": "0",
+        "closePayload": "",
+        "closeMsg": {},
+        "willTopic": "",
+        "willQos": "0",
+        "willPayload": "",
+        "willMsg": {},
+        "userProps": "",
+        "sessionExpiry": ""
+    },
+    {
+        "id": "c93ddcfe83e9ae6c",
+        "type": "mongodb",
+        "hostname": "127.0.0.1",
+        "topology": "direct",
+        "connectOptions": "",
+        "port": "27017",
+        "db": "InTruck",
+        "name": ""
+    }
+]
