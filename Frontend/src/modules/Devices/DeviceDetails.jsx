@@ -4,17 +4,16 @@
  deviceName
  */
 
-import { Battery1Bar, Battery20, Battery50, Battery80, BatteryCharging20, BatteryCharging30, BatteryCharging50, BatteryCharging80, BatteryChargingFull, BatteryFull, BatteryUnknown, HourglassTop, Speed, Thermostat, Water } from "@mui/icons-material"
-import { Button, CircularProgress } from "@mui/material"
+import { AcUnit, Battery1Bar, Battery20, Battery50, Battery80, BatteryCharging20, BatteryCharging30, BatteryCharging50, BatteryCharging80, BatteryChargingFull, BatteryFull, BatteryUnknown, HourglassTop, SignalCellular0Bar, SignalCellular1Bar, SignalCellular2Bar, SignalCellular3Bar, SignalCellular4Bar, SignalCellularConnectedNoInternet0Bar, SignalCellularNodata, Speed, Thermostat, Water } from "@mui/icons-material"
 import { Component } from "react"
 import { COLOURS } from "../../config"
-import BasicField from "../../fields/BasicField"
-import Input from "../../fields/Input"
-import Title from "../../fields/Title"
-import { apiGetCall, apiPostCall } from "../../generics/APIFunctions"
+import { apiGetCall } from "../../generics/APIFunctions"
 import { isEmpty, valueOrEmpty } from "../../generics/GeneralFunctions"
 import InfoBlock from "../InfoBlock"
+import InfoLine from "../InfoLine"
 import Map from "../Map"
+import moment from "moment"
+import DeviceConfig from "./DeviceConfig"
 
 const styles = {
     container: {
@@ -44,27 +43,49 @@ export default class DeviceDetails extends Component {
         super(props)
         this.state = {
             truck: {},
-            config: {},
             loading: false,
         }
     }
-    handleChange = ev => {
-        let { config } = this.state
-        config[ev.target.name] = ev.target.value
 
-        this.setState({
-            config: config
-        })
+    getArrValue = (category) => {
+        const { truck } = this.state
 
+        //If category doesnt exist
+        if (isEmpty(truck[category]) || isEmpty(truck)) {
+            return []
+        }
+
+        return truck[category]
     }
 
-    handleSaveConfig = () => {
-        this.POSTconfig()
+    getSubValue = (category, prop, bauble) => {
+        const { truck } = this.state
+
+        //If category doesnt exist
+        if (isEmpty(truck[category]) || isEmpty(truck)) {
+            return valueOrEmpty("", bauble)
+        }
+
+        //Get the latest row
+        const row = truck[category][truck[category].length - 1]
+
+        //Dirty code to catch not installed batteries
+        if (category === "battery") {
+            if (!row.installed) {
+                return "Not installed"
+            }
+        }
+
+        return valueOrEmpty(row[prop], bauble)
     }
 
     GETdeviceDetails = () => {
-        const url = `device/getDeviceData/${this.props.deviceName}`
-        const keys = ["network", "battery", "environment", "timestamp", "device_name", "alert"]
+        const secondsBefore = 10
+        // const from = 1666162038
+        const from = (new Date().getTime() / 1000) - secondsBefore * 1000
+        const to = new Date().getTime() / 1000
+        const url = `device/getDeviceDataRange/${this.props.deviceName}, ${from}, ${to}`
+        const keys = ["network", "battery", "environment", "timestamp", "device_name", "location", "alert"]
         const callback = data => {
             let truck = {}
             //Convert each row of data into an array of entries
@@ -73,6 +94,9 @@ export default class DeviceDetails extends Component {
                 for (let row of data) {
                     if (row[key]) {
                         truck[key].push(row[key])
+                        if (typeof truck[key][truck[key].length - 1] !== "object") { continue }
+                        moment.locale("en-au")
+                        truck[key][truck[key].length - 1].timestamp = moment(row.timestamp).format("HH:mm:ss")
                     }
                 }
             }
@@ -92,42 +116,14 @@ export default class DeviceDetails extends Component {
         }
 
         this.setState({
-            loading: true
+            loading: true,
         })
         apiGetCall(url, callback, error, true)
 
     }
 
-    GETdeviceConfig = () => {
-        const url = `config/getConfig/${this.props.deviceName}`
-        const callback = d => {
-            this.setState({
-                config: d[0]
-            })
-        }
-        const error = e => {
-            console.error(e)
-            this.setState({
-                config: {}
-            })
-        }
-        apiGetCall(url, callback, error)
-    }
-
-    POSTconfig = () => {
-        const url = "config"
-        const body = JSON.stringify(this.state.config)
-        const callback = d => {
-
-        }
-        const error = e => {
-            console.error(e)
-        }
-        apiPostCall(url, "POST", body, callback, error)
-    }
-
     componentDidMount() {
-        setInterval(() => {
+        this.reloader = setInterval(() => {
             this.GETdeviceDetails()
         }, 10000);
     }
@@ -135,15 +131,23 @@ export default class DeviceDetails extends Component {
     componentDidUpdate(prevProps) {
         if (prevProps.deviceName !== this.props.deviceName) {
             this.GETdeviceDetails()
-            this.GETdeviceConfig()
         }
     }
 
+    componentWillUnmount() {
+        clearInterval(this.reloader)
+    }
+
     render() {
-        let { truck, config } = this.state
+        let { truck } = this.state
         if (!truck || !truck.device_name) { truck = null }
         const getBatteryIcon = () => {
-            const battery = truck.battery[truck.battery.length - 1]
+            let battery = truck ? truck.battery : null
+            if (isEmpty(battery)) {
+                return <BatteryUnknown />
+            }
+            battery = battery[battery.length - 1]
+
             //Unknown
             if (isEmpty(battery.charge_level)) {
                 return <BatteryUnknown />
@@ -194,6 +198,28 @@ export default class DeviceDetails extends Component {
             }
         }
 
+        const getNetworkIcon = () => {
+            let network = truck ? truck.network : null
+            if (isEmpty(network)) {
+                return <SignalCellularNodata />
+            }
+            network = network[network.length - 1]
+            const rssi = Number(network.rssi)
+            if (rssi === 0) {
+                return <SignalCellular0Bar />
+            } else if (rssi < 8) {
+                return <SignalCellular1Bar />
+            } else if (rssi < 16) {
+                return <SignalCellular2Bar />
+            } else if (rssi < 24) {
+                return <SignalCellular3Bar />
+            } else if (rssi <= 31) {
+                return <SignalCellular4Bar />
+            } else {
+                return <SignalCellularConnectedNoInternet0Bar />
+            }
+
+        }
 
 
         return (
@@ -202,81 +228,10 @@ export default class DeviceDetails extends Component {
 
 
                 {/*Details*/}
-                {truck === null ?
+                {this.props.deviceName === "" ?
                     <h5>No Truck selected</h5> :
 
                     <article>
-                        {/* Configuration */}
-                        {config.device_name &&
-                            <article style={styles.configContainer}>
-
-                                <h3 style={styles.configTitle}>Configuration</h3>
-
-                                <section className="wrap">
-                                    {/*ID*/}
-                                    <BasicField
-                                        disabled
-                                        label="Name"
-                                        value={config.device_name}
-                                        onChange={this.handleChange}
-                                        style={styles.input}
-                                        name="device_name"
-                                    />
-
-                                    {/*Registration*/}
-                                    <BasicField
-                                        label="Registration"
-                                        value={config.vehicle_rego}
-                                        style={styles.input}
-                                        onChange={this.handleChange}
-                                        name="vehicle_rego"
-
-                                    />
-                                    {/*Max Humidity*/}
-                                    <BasicField
-                                        label="Maximum Humidity"
-                                        value={config.max_hum}
-                                        style={styles.input}
-                                        onChange={this.handleChange}
-                                        name="max_hum"
-                                    />
-                                    {/*Min Humidity*/}
-                                    <BasicField
-                                        label="Minimum Humidity"
-                                        value={config.min_hum}
-                                        style={styles.input}
-                                        onChange={this.handleChange}
-                                        name="min_hum"
-                                    />
-                                    {/*Max Temperature*/}
-                                    <BasicField
-                                        label="Maximum Temperature"
-                                        value={config.max_temp}
-                                        style={styles.input}
-                                        onChange={this.handleChange}
-                                        name="max_temp"
-                                    />
-                                    {/*Min Temperature*/}
-                                    <BasicField
-                                        label="Minimum Temperature"
-                                        value={config.min_temp}
-                                        style={styles.input}
-                                        onChange={this.handleChange}
-                                        name="min_temp"
-                                    />
-                                </section>
-
-                                <section className="end">
-                                    <Button
-                                        variant="outlined"
-                                        onClick={this.handleSaveConfig}
-                                    >
-                                        Save Config
-                                    </Button>
-                                </section>
-
-                            </article>
-                        }
 
                         {/*Device Info*/}
                         <article>
@@ -287,7 +242,7 @@ export default class DeviceDetails extends Component {
                                     label="Temperature"
                                     loading={this.state.loading}
                                     icon={<Thermostat />}
-                                    value={valueOrEmpty(truck.environment[truck.environment.length - 1].temperature)}
+                                    value={this.getSubValue("environment", "temperature", "°C")}
                                 />
 
                                 {/*Humidity*/}
@@ -295,43 +250,63 @@ export default class DeviceDetails extends Component {
                                     label="Humidity"
                                     loading={this.state.loading}
                                     icon={<Water />}
-                                    value={valueOrEmpty(truck.environment[truck.environment.length - 1].humidity)}
+                                    value={this.getSubValue("environment", "humidity", "%")}
                                     colour={COLOURS[4]}
                                 />
 
-                                {/*Speed*/}
+                                {/*Battery*/}
                                 <InfoBlock
                                     label="Battery"
                                     loading={this.state.loading}
                                     icon={getBatteryIcon()}
-                                    value={valueOrEmpty(truck.battery[truck.battery.length - 1].charge_level)}
+                                    value={this.getSubValue("battery", "charge_level", "%")}
                                     colour={COLOURS[2]}
                                 />
 
-                                {/*Status*/}
+                                {/*Network*/}
                                 <InfoBlock
-                                    label="Battery Temperature"
+                                    label="Network"
                                     loading={this.state.loading}
+                                    icon={getNetworkIcon()}
+                                    colour={COLOURS[5]}
+                                    value={`${this.getSubValue("network", "operator")} ${this.getSubValue("network", "access_tech")}`}
+                                />
+
+                                {/* Temperature line */}
+                                <InfoLine
+                                    label="Temperature"
+                                    size={1}
                                     icon={<Thermostat />}
                                     colour={COLOURS[2]}
-                                    value={valueOrEmpty(truck.battery[truck.battery.length - 1].temp)}
+                                    data={this.getArrValue("environment")}
+                                    x="timestamp"
+                                    y="temperature"
                                 />
+
+                                {/* Humidity Line */}
+                                <InfoLine
+                                    label="Humidity"
+                                    size={1}
+                                    icon={<AcUnit />}
+                                    colour={COLOURS[3]}
+                                    data={this.getArrValue("environment")}
+                                    x="timestamp"
+                                    y="humidity"
+                                />
+
+
 
                             </section>
-                            {(truck.location && truck.location[truck.location.length].fix) ?
-                                <Map
-                                    markers={[
-                                        {
-                                            lat: -37.8243913,
-                                            long: 145.0396567
-                                        },
-                                    ]}
-                                />
-                                :
-                                <h5 className="selfCenter">Unable to determine location</h5>
-
-                            }
+                            <Map
+                                markers={[{
+                                    lat: this.getSubValue("location", "lat"),
+                                    lon: this.getSubValue("location", "lon"),
+                                }]}
+                            />
                         </article>
+
+                        {/*Config*/}
+                        <DeviceConfig deviceName={this.props.deviceName} />
                     </article>
                 }
 

@@ -16,7 +16,7 @@ const styles = {
         position: "fixed"
     },
     inner: {
-        padding: "5% 0 0 5%"
+        padding: "5% 5% 0 5%"
     },
     logo: {
         height: "15%",

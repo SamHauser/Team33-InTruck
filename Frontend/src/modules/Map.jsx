@@ -5,7 +5,12 @@
 */
 
 import React, { Component } from 'react';
+import ReactDOM from 'react-dom/client';
 import mapboxgl from 'mapbox-gl';
+import { LocalShipping } from '@mui/icons-material';
+import { COLOURS } from '../config';
+import { Tooltip } from '@mui/material';
+import { arrMatch } from '../generics/GeneralFunctions';
 
 // Set your mapbox access token here
 mapboxgl.accessToken = 'pk.eyJ1Ijoicm9zc2luZ3RvbjU1IiwiYSI6ImNsMzF0ZG9jZTIyam4zaXAyaGZjNWhkZGMifQ.sHPj8kR1E4e_cCc6TCCEqg';
@@ -21,30 +26,21 @@ const styles = {
     }
 }
 
-const markers = [
-    {
-        lat: -37.8243913,
-        long: 145.0396567
-    },
-    {
-        lat: -37.823524,
-        long: 145.043003
-    },
-    {
-        lat: -37.820710,
-        long: 145.045451
-    }
-]
-
 export default class Map extends Component {
     constructor(props) {
         super(props);
         this.state = {
             zoom: 10,
-            height: 358,
-            width: 1120,
+            height: 300,
+            width: 880,
         };
         this.mapContainer = React.createRef();
+    }
+
+    handleMarkerClick = deviceName => {
+        sessionStorage.setItem("lastPage", JSON.stringify("Tracking"))
+        sessionStorage.setItem("lastDevice", deviceName)
+        window.location.reload()
     }
 
     setMarkers = () => {
@@ -60,45 +56,72 @@ export default class Map extends Component {
         }
 
         //Get average latitudes and longitudes
-        let minLat = Infinity, maxLat = -Infinity
-        let minLong = Infinity, maxLong = -Infinity
+        let minLat = 90, maxLat = -90
+        let minLon = 180, maxLon = -180
         for (let mark of markers) {
-
             lats.push(mark.lat)
-            longs.push(mark.long)
+            longs.push(mark.lon)
 
             if (mark.lat < minLat) { minLat = mark.lat }
             if (mark.lat > maxLat) { maxLat = mark.lat }
 
-            if (mark.long < minLong) { minLong = mark.long }
-            if (mark.long > maxLong) { maxLong = mark.long }
+            if (mark.lon < minLon) { minLon = mark.lon }
+            if (mark.lon > maxLon) { maxLon = mark.lon }
         }
-        const lat = lats.reduce((a, b) => a + b) / lats.length
-        const long = longs.reduce((a, b) => a + b) / longs.length
+
+        if (minLat === 90 && minLon === 90) {
+            minLat = -90
+            maxLat = 90
+            minLon = -180
+            maxLon = 180
+        }
 
         //Set boundaries just outside furthest pins
         const bounds = this.props.markers ? [
-            [minLong - 0.011, minLat - 0.011],
-            [maxLong + 0.011, maxLat + 0.011]
-        ] : [[-90, -90], [90, 90]]
+            [Number(minLon), Number(minLat) - 0.011],
+            [Number(maxLon) + 0.011, Number(maxLat) + 0.011]
+        ] : [[-180, -90], [180, 90]]
 
 
         const map = new mapboxgl.Map({
             container: this.mapContainer.current,
             style: 'mapbox://styles/rossington55/cl31so9i2000014mvrbi6s0oc',
-            center: [long, lat],
-            zoom: zoom
+            bounds: bounds,
+            boxZoom: false,
         });
+        if (!this.props.markers) { return }
         map.fitBounds(bounds)
 
         //Set marker styles
-        const el = document.createElement('div');
-
+        const style = {
+            color: COLOURS[2]
+        }
+        const textStyle = {
+            color: COLOURS[5]
+        }
 
         //Add markers to map
         for (let mark of markers) {
-            const marker = new mapboxgl.Marker()
-                .setLngLat([mark.long, mark.lat])
+            if (mark.lon === "No data" && mark.lat === "No data") { continue }
+
+            //Boilerplate
+            const el = document.createElement('div');
+            const root = ReactDOM.createRoot(el)
+
+            //Marker element
+            const markerEl =
+                <Tooltip
+                    title={mark.name}
+                >
+                    <LocalShipping
+                        style={style}
+                        onClick={() => this.handleMarkerClick(mark.name)}
+                    />
+                </Tooltip>
+            root.render(markerEl)
+
+            const marker = new mapboxgl.Marker(el)
+                .setLngLat([mark.lon, mark.lat])
                 .addTo(map);
         }
 
@@ -108,7 +131,7 @@ export default class Map extends Component {
     }
 
     componentDidUpdate(prevProps) {
-        if (prevProps.markers !== this.props.markers) {
+        if (!arrMatch(prevProps.markers, this.props.markers)) {
             this.setMarkers()
         }
     }
@@ -119,18 +142,21 @@ export default class Map extends Component {
     render() {
 
         return (
-            <article style={
-                {
+            <article
+                className='center itemsCenter selfCenter'
+                style={
+                    {
 
-                    ...styles.container,
-                    ...{
+                        ...styles.container,
+                        ...{
 
-                        height: this.state.height,
-                        width: this.state.width
+                            height: this.state.height,
+                            width: this.state.width
+                        }
                     }
-                }
-            }>
+                }>
                 <div
+                    className='selfCenter'
                     ref={this.mapContainer}
                     style={styles.map}
                 />

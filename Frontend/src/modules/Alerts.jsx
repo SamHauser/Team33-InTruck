@@ -68,9 +68,9 @@ export default class Alerts extends Component {
             const time = moment.unix(truck.timestamp).format("DD/MM/YYYY hh:mm:ss")
             alerts.push(
                 {
-                    title: time,
                     icon: icons[alert.type],
-                    description: alert.type,
+                    title: `${truck.device_name}     ${alert.type}`,
+                    description: time,
                     time: truck.timestamp
                 }
             )

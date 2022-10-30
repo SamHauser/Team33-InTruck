@@ -814,13 +814,24 @@ function getLongLat(returnCallback, error) {
 }
 
 //Returns a string if the value is empty
-function valueOrEmpty(value) {
+function valueOrEmpty(value, bauble) {
     if (isEmpty(value)) {
         return "No data"
     }
+
+    if (bauble) {
+        return value + " " + bauble
+    }
+
     return value
 }
 
+function arrMatch(a, b) {
+    a = JSON.stringify(a)
+    b = JSON.stringify(b)
+
+    return a === b
+}
 
 
 export {
@@ -864,4 +875,5 @@ export {
     valueOrEmpty,
     checkRoleAuth,
     getLongLat,
+    arrMatch,
 };
