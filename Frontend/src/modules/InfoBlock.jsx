@@ -7,6 +7,7 @@
  * colour
  * isUnit - is this module the basis for all unit calculations
  */
+import { CircularProgress } from "@mui/material"
 import React, { Component } from "react"
 import { COLOURS } from "../config"
 
@@ -74,7 +75,9 @@ export default class InfoBlock extends Component {
                 <h3 style={styles.label}>{this.props.label}</h3>
 
                 {/*Value*/}
-                <h2 style={styles.value}>{this.props.value}</h2>
+                {this.props.loading ? <CircularProgress /> :
+                    <h2 style={styles.value}>{this.props.value}</h2>
+                }
             </article >
         )
     }

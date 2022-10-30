@@ -196,6 +196,7 @@ class TestDeviceData(unittest.TestCase):
         deviceDataCollection.delete_many({"device_name":"InTruck5"})
         deviceDataCollection.delete_many({"device_name":"InTruck6"})
 
+
 # Class tests for the Users API calls
 class TestUsers(unittest.TestCase):
     # Test add or create User
@@ -246,6 +247,7 @@ class TestUsers(unittest.TestCase):
         print("Running get all users")
         response = requests.get(domain + "users/getAll/",  headers = headers)
         responseJson = response.json()
+
         self.assertIs(response.status_code, 200)
         foundTestUser = False
         for data in responseJson["data"][0]:
@@ -253,6 +255,13 @@ class TestUsers(unittest.TestCase):
             if jsonDump["username"] == "test.user":
                 foundTestUser = True
         self.assertTrue(foundTestUser)
+
+        print(responseJson)
+        self.assertIs(response.status_code, 200)
+        #self.assertIn(responseJson["data"][2]["username"], "test.user")
+        #self.assertIn(responseJson["data"][2]["first_name"], "Test")
+        #self.assertIn(responseJson["data"][2]["last_name"], "User")
+
 
     # Test get token
     def test_get_token(self):

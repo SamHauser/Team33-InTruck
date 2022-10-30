@@ -1,18 +1,18 @@
 import { Component } from "react";
 import Dashboard from "./modules/Dashboard";
-import Tracking from "./modules/Tracking";
 import NavBar from "./modules/NavBar";
-import { Home, Logout, Map, Settings } from '@mui/icons-material'
-import Alerts from "./modules/Alerts";
+import { Home, Logout, Map, People } from '@mui/icons-material'
 import Login from "./login";
 import LogoutPage from "./logout";
+import Users from "./modules/Users/Users";
+import DeviceEnquiry from "./modules/Devices/DeviceEnquiry";
 
 const styles = {
     navBar: {
         marginRight: "max(15%,150px)",
     },
     body: {
-        padding: "3% 0 0 3%",
+        padding: "3% 3% 0 3%",
     },
 }
 
@@ -27,14 +27,15 @@ const options = [
         {
             name: "Tracking",
             icon: <Map />,
-            component: <Tracking />
+            component: <DeviceEnquiry />
         }
     ],
     [
 
         {
-            name: "Settings",
-            icon: <Settings />
+            name: "Users",
+            icon: <People />,
+            component: <Users />
         },
         {
             name: "Logout",
@@ -79,7 +80,7 @@ export default class Homepage extends Component {
     }
 
     render() {
-        if (!sessionStorage.getItem("logged-in")) {
+        if (!sessionStorage.getItem("token")) {
             return <Login />
 
         } else {

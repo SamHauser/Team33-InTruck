@@ -2,7 +2,7 @@
  * PROPS
  * -----
  */
-import { AttachMoney, CreditCard, LocalShipping, Sell } from "@mui/icons-material"
+import { AttachMoney, BatteryCharging20, CreditCard, LocalShipping, Sell, ThirtyFpsOutlined } from "@mui/icons-material"
 import { Component } from "react"
 import { COLOURS } from "../config"
 import Title from "../fields/Title"
@@ -11,6 +11,7 @@ import InfoBlock from "./InfoBlock"
 import InfoLine from "./InfoLine"
 import Module from "./Module"
 import Map from "./Map"
+import { apiGetCall } from "../generics/APIFunctions"
 
 const blockData = [
     {
@@ -73,8 +74,49 @@ export default class Dashboard extends Component {
     constructor(props) {
         super(props)
         this.state = {
+            latestData: { rows: [] },
+        }
+    }
+
+    GETlatestData = () => {
+        const url = "device/getLatestEntry"
+        const callback = d => {
+            d = { rows: d }
+            // console.log(d)
+
+            //Set marker locations
+            let markers = []
+            for (let row of d.rows) {
+                if (!row.location || !row.location.fix) { continue }
+                markers.push({
+                    lat: row.location.lat,
+                    long: row.location.lon
+                })
+            }
+            d.markers = markers
+
+            //Set amount of devices on charge
+            let onCharge = 0
+            for (let row of d.rows) {
+                if (!row.battery) { continue }
+                if (row.battery.charging === "true") {
+                    onCharge++
+                }
+            }
+            d.onCharge = onCharge
+
+            this.setState({
+                latestData: d,
+            })
+        }
+        const error = e => {
 
         }
+        apiGetCall(url, callback, error, true)
+
+    }
+    componentDidMount() {
+        this.GETlatestData()
     }
 
     render() {
@@ -84,51 +126,35 @@ export default class Dashboard extends Component {
             {/*Alerts*/}
             <section className="wrap">
                 <Module width={6}>
-                    <Alerts />
+                    <Alerts latestData={this.state.latestData.rows} />
                 </Module>
             </section>
 
             {/*Stats*/}
             <section className="wrap">
-                {blockData.map((d, i) => (
-                    <InfoBlock
-                        key={i}
-                        colour={COLOURS[i + 2]}
-                        isUnit={i === 0}
-                        {...d}
-                    />
-                ))}
-
-                {lineData.map((d, i) => (
-                    <Module key={i} width={3} height={1}>
-                        <InfoLine
-                            key={i}
-                            colour={COLOURS[i + 2]}
-                            {...d}
-                            size={3}
-                            data={saleData}
-                        />
-                    </Module>
-                ))}
+                {/*Trucks*/}
+                <InfoBlock
+                    colour={COLOURS[2]}
+                    isUnit
+                    label="Trucks"
+                    icon={<LocalShipping />}
+                    value={this.state.latestData.rows.length}
+                />
+                {/*Trucks*/}
+                <InfoBlock
+                    colour={COLOURS[3]}
+                    label="On Charge"
+                    icon={<BatteryCharging20 />}
+                    value={this.state.latestData.onCharge}
+                />
             </section>
 
             {/*Map*/}
             <section className="wrap">
                 <Module width={6} height={2}>
                     <Map
-                        markers={[
-                            {
-                                lat: -37.8243913,
-                                long: 145.0396567
-                            },
-                            {
-                                lat: -37.823524,
-                                long: 145.043003
-                            },
-                            {
-                                lat: -37.820710,
-                                long: 145.045451
-                            }]}
+                        markers={this.state.latestData.markers}
+
                     />
                 </Module>
             </section>

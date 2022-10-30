@@ -62,8 +62,12 @@ def main():
     
     luminance_event = Event()
     luminance_thread = Thread(target=device.detect_door_open, args=(luminance_event,))
+    luminance_thread.daemon = True
+    luminance_thread.start()
     freefall_event = Event()
-    freefall_thread = Thread(target=device.wait_for_freefall,args =(freefall_event,))
+    freefall_thread = Thread(target=device.wait_for_freefall, args=(freefall_event,))
+    freefall_thread.daemon = True
+    freefall_thread.start()
 
     mqttc = MqttConnector()
     mqttc.connect(MQTT_ADDRESS, MQTT_PORT, DEVICE_NAME, MQTT_USERNAME, MQTT_PASS)
@@ -104,12 +108,6 @@ def main():
            
             # Main loop for device
             while True:
-                
-                if not freefall_thread.is_alive():
-                    freefall_thread.start()
-                if not luminance_thread.is_alive():
-                    luminance_thread.start()
-                
                 message_payload = {}
                 # Monotonic time always counts up and is unrelated to device time/timezone changes
                 ref_time = time.monotonic()

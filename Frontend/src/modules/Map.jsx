@@ -47,7 +47,7 @@ export default class Map extends Component {
         this.mapContainer = React.createRef();
     }
 
-    componentDidMount() {
+    setMarkers = () => {
         const { zoom } = this.state;
         //Set default marker if 
         let markers = []
@@ -78,8 +78,8 @@ export default class Map extends Component {
 
         //Set boundaries just outside furthest pins
         const bounds = this.props.markers ? [
-            [minLong - 0.0005, minLat - 0.0005],
-            [maxLong + 0.0005, maxLat + 0.0005]
+            [minLong - 0.011, minLat - 0.011],
+            [maxLong + 0.011, maxLat + 0.011]
         ] : [[-90, -90], [90, 90]]
 
 
@@ -93,13 +93,6 @@ export default class Map extends Component {
 
         //Set marker styles
         const el = document.createElement('div');
-        el.className = 'marker';
-        el.style.width = `40px`;
-        el.style.height = `40px`;
-        el.style.backgroundSize = '100%';
-        el.style.opacity = 0
-        el.style.height = 50
-        el.className = 'marker'
 
 
         //Add markers to map
@@ -109,7 +102,15 @@ export default class Map extends Component {
                 .addTo(map);
         }
 
+    }
+    componentDidMount() {
+        this.setMarkers()
+    }
 
+    componentDidUpdate(prevProps) {
+        if (prevProps.markers !== this.props.markers) {
+            this.setMarkers()
+        }
     }
 
 

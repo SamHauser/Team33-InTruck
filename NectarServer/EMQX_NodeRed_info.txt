@@ -40,6 +40,13 @@ Security link
 Using SSH tunnel
 	ssh -i 'your Key path' -L 80:localhost:1880 ubuntu@203.101.231.176
 
+SystemD - Running as a background process
+	Install
+		sudo npm install -g pm2
+	pm2 start node-red
+	pm2 startup systemd
+
+
 ************************** 	MongoDB	**************************
 Install instructions	
 	https://www.mongodb.com/docs/manual/tutorial/install-mongodb-on-ubuntu/
