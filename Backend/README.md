@@ -180,13 +180,19 @@ sudo apt-get upgrade -y
 ```
 Navigate to the .node-red folder. This is a hidden folder within the home/ubuntu.
 ```Console
-cd home/ubuntu
-ls -a
-cd .node-red
+cd home/ubuntu/.node-red
 ```
 Install the MongoDB package for Node-Red
 ```Console
 sudo npm install node-red-node-mongodb
+```
+Open the settings file to change the secret key
+```Console
+sudo nano settings.js
+```
+FInd and uncomment the line _//credentialSecret: "a-secret-key",_ Then change the secret key to _InTruckCapProject_
+```Console
+credentialSecret: "InTruckCapProject",
 ```
 Download the flows.json from Github. This needs to be done in the some location as previous steps
 ```Console
@@ -204,3 +210,97 @@ Make pm2 start using systemd. This creates a command on the console windows that
 ```Console
 pm2 startup systemd
 ```
+***
+## FastAPI Installation and Setup
+### Installation
+---
+Make a folder for the Github files, then move into it.
+```Console
+mkdir InTruck
+cd InTruck
+```
+Install Subversion
+```Console
+sudo apt install subversion
+```
+Use Subversion to download just the Backend folder from Github
+```Console
+svn export https://github.com/SamHauser/Team33-InTruck/trunk/Backend
+```
+Move to Backend folder
+```Console
+cd Backend
+```
+Install Python3.7
+```Console
+sudo apt update
+sudo apt install software-properties-common
+sudo apt install python3-pip
+sudo add-apt-repository ppa:deadsnakes/ppa
+sudo apt install python3.7
+```
+Install the requirements for Python's FastAPI
+```Console
+pip3 install -r requirements.txt
+```
+Set the FastAPI to run on startup
+```Console
+sudo nano /etc/systemd/system/fastAPI.service
+```
+Copy and paste the below, taking note of the locations of the starting script
+```Console
+[Unit]
+Description=InTruck API endpoint
+After=multi-user.target
+Conflicts=getty@tty1.service
+#StartLimitIntervalSec=5
+
+[Service]
+User=ubuntu
+Type=simple
+#Restart=always
+#RestartSec=10
+ExecStart=/usr/bin/python3.7 /home/ubuntu/InTruck/Backend/main.py
+StandardOutput=file:/home/ubuntu/InTruck/Backend/api.log
+StandardInput=tty-force
+
+[Install]
+WantedBy=multi-user.target
+```
+Reload the daemon
+```Console
+sudo systemctl daemon-reload
+```
+Enable the service
+```Console
+sudo systemctl enable fastAPI.service
+```
+Start the service
+```Console
+sudo systemctl start fastAPI.service
+Check the status of the service
+```Console
+sudo systemctl status fastAPI.service
+```
+You can change the status to stop and restart which effectly does what they say
+
+Troubleshooting:
+* If you have issues with the Python version you can set alternatives with:
+```Console
+sudo update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.6 1
+sudo update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.7 2
+```
+Then set the default, using the number at the start of each line
+```Console
+sudo update-alternatives --config python3
+```
+* Alternative setups might be to use a docker container or a python environment
+
+## Testing
+* Reboot the machine and then check all the services, these should all be up and running.
+* Run the test_fastAPI.py
+```Console
+cd home/ubuntu/InTruck/Backend
+python3.7 test_fastAPI.py
+```
+
