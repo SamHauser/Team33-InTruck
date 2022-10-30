@@ -254,7 +254,7 @@ async def loginUser(username: str, password: str):
 
  ################### Alerts Section ######################
 
-async def retrieveAlertsRange(timeFrom: int, timeTo: int):
+async def retrieveAlertsRange(timeFrom: float, timeTo: float):
     # Input should be as epoch time. JS should be Date.now()
     deviceData = []
     async for deviceDoc in DeviceCollection.find({'alert': {'$exists' : True}, 'timestamp': {'$gt' : timeFrom, '$lt' : timeTo}}):
