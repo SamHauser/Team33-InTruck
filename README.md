@@ -8,7 +8,7 @@
 - Claudia :bowtie:
 - Eamonn 🦎
 - Harrison 📎
-- Nathaniel ◻️
+- Nathaniel 🦷
 - Samuel :shipit:
 
 ## What is InTruck?
@@ -21,7 +21,7 @@ Built from a Raspberry Pi base, the device itself uses sensors to monitor interi
 
 The information from multiple devices is collated on a web interface, which shows the location, interior conditions and any alerts present. It also provides a historial view, so that previous journeys can be analysed.
 
-*Screenshots or gif of web interface here*
+<img src="./Frontend.png" width="500"/>
 
 For more detail on each component, navigate to the associated README file in the project folders.
 
